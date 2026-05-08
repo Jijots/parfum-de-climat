@@ -8,6 +8,7 @@ use App\Models\UserCollection;
 use App\Services\SessionWardrobeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BrowseController extends Controller
 {
@@ -23,7 +24,8 @@ class BrowseController extends Controller
 
         if ($request->filled('search')) {
             $term = '%' . $request->search . '%';
-            $query->where(fn ($q) => $q->where('name', 'like', $term)->orWhere('brand', 'like', $term));
+            $op   = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';
+            $query->where(fn ($q) => $q->where('name', $op, $term)->orWhere('brand', $op, $term));
         }
 
         if ($request->filled('gender') && $request->gender !== 'all') {

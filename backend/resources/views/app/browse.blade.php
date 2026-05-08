@@ -19,44 +19,65 @@
             search: '{{ request('search', '') }}',
             gender: '{{ request('gender', 'all') }}',
             loading: false,
-            transitioning: false,
-            requestToken: 0,
             wardrobe: @js($collectionIds),
+
+            // AbortController for the in-flight fetch — lets us cancel stale requests
+            // immediately rather than waiting for them to resolve and ignoring the result.
+            _abort: null,
+            // Timer for debouncing search input
+            _debounceTimer: null,
+            // Timer that delays showing the loading indicator so fast responses
+            // (<150 ms) never cause a distracting flash.
+            _loadingTimer: null,
 
             init() {
                 this.$watch('search', () => this.debounce());
                 this.$watch('gender', () => this.doSearch(1));
             },
 
-            _timer: null,
             debounce() {
-                clearTimeout(this._timer);
-                this._timer = setTimeout(() => this.doSearch(1), 320);
+                clearTimeout(this._debounceTimer);
+                this._debounceTimer = setTimeout(() => this.doSearch(1), 400);
             },
 
             async doSearch(page = 1) {
-                const token = ++this.requestToken;
-                this.loading = true;
-                this.transitioning = true;
-                const params = new URLSearchParams({ q: this.search, gender: this.gender, page: String(page) });
+                // Cancel any previous in-flight request immediately
+                if (this._abort) {
+                    this._abort.abort();
+                    this._abort = null;
+                }
+                clearTimeout(this._loadingTimer);
+
+                const controller  = new AbortController();
+                this._abort       = controller;
+
+                // Only show the loading overlay if the request takes longer than 150 ms.
+                // This prevents a distracting flash for fast cached responses.
+                this._loadingTimer = setTimeout(() => { this.loading = true; }, 150);
+
+                const params = new URLSearchParams({
+                    q:      this.search,
+                    gender: this.gender,
+                    page:   String(page),
+                });
+
                 try {
-                    const res = await fetch('{{ route('browse.search') }}?' + params, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    const res  = await fetch('{{ route('browse.search') }}?' + params, {
+                        signal:  controller.signal,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     });
                     const data = await res.json();
 
-                    // Ignore stale responses when users click pages quickly.
-                    if (token !== this.requestToken) return;
-
-                    this.results = data.fragrances;
-                    this.total = data.total;
+                    this.results     = data.fragrances;
+                    this.total       = data.total;
                     this.currentPage = data.current_page;
-                    this.lastPage = data.last_page;
+                    this.lastPage    = data.last_page;
+                } catch (e) {
+                    if (e.name === 'AbortError') return; // Intentionally cancelled — do nothing
                 } finally {
-                    if (token === this.requestToken) {
-                        this.loading = false;
-                        this.transitioning = false;
-                    }
+                    clearTimeout(this._loadingTimer);
+                    this.loading = false;
+                    this._abort  = null;
                 }
             },
 
@@ -121,10 +142,7 @@
 
         <div class="relative min-h-[28rem]">
             {{-- Grid --}}
-            <div
-                :class="transitioning ? 'opacity-70 scale-[0.995]' : 'opacity-100 scale-100'"
-                class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 transition-all duration-200 ease-out"
-            >
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 <template x-for="f in results" :key="f.id">
                     <div class="neu-raised rounded-2xl overflow-hidden group">
                     {{-- Image --}}
@@ -180,7 +198,7 @@
             >
                 <div class="inline-flex items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--muted)] shadow-sm">
                     <span class="inline-block h-2 w-2 rounded-full bg-[var(--color-accent)] animate-pulse"></span>
-                    Loading page...
+                    Searching…
                 </div>
             </div>
         </div>
