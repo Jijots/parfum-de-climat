@@ -84,7 +84,7 @@
                     type="button"
                     class="btn-icon"
                     title="Toggle dark mode"
-                    @click="Alpine.store('theme').toggle()"
+                    @click="$store.theme.toggle()"
                     :aria-label="$store.theme.dark ? 'Switch to light mode' : 'Switch to dark mode'"
                 >
                     <svg x-show="$store.theme.dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">

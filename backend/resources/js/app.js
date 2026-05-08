@@ -41,20 +41,30 @@ import './bootstrap';
 /*   Toggle:        @click="$store.theme.toggle()"                           */
 /*   Check state:   x-bind:class="{ 'dark': $store.theme.dark }"             */
 /*   Conditional:   <span x-show="$store.theme.dark">Moon icon</span>        */
-document.addEventListener('alpine:init', () => {
+/**
+ * Register the theme store as soon as Alpine is ready.
+ *
+ * We listen for both 'alpine:init' (fires before Alpine walks the DOM,
+ * which is the correct hook) AND fall back to registering immediately
+ * if Alpine has already initialised by the time this module runs.
+ * This prevents the race condition where both x-show icons are hidden
+ * because $store.theme is undefined on first evaluation.
+ */
+function registerThemeStore() {
     Alpine.store('theme', {
-        /** Reflects the current dark-mode state. Initialised from <html> class. */
         dark: document.documentElement.classList.contains('dark'),
 
-        /**
-         * Toggle between light and dark mode.
-         * Updates the DOM class, the store state, and persists the choice
-         * to localStorage so the preference survives page reloads.
-         */
         toggle() {
             this.dark = !this.dark;
             document.documentElement.classList.toggle('dark', this.dark);
             localStorage.setItem('pdc_theme', this.dark ? 'dark' : 'light');
         },
     });
-});
+}
+
+if (window.Alpine) {
+    // Alpine already loaded (e.g. cached CDN) — register immediately
+    registerThemeStore();
+} else {
+    document.addEventListener('alpine:init', registerThemeStore);
+}

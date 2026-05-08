@@ -49,7 +49,7 @@ class MigrateFragrancesToPgsqlCommand extends Command
     public function handle(): int
     {
         // ── Validate required options ─────────────────────────────────────────
-        foreach (['host', 'database', 'username', 'password'] as $opt) {
+        foreach (['host', 'database', 'username'] as $opt) {
             if (! $this->option($opt)) {
                 $this->error("Missing required option: --{$opt}");
                 return Command::FAILURE;
@@ -63,7 +63,7 @@ class MigrateFragrancesToPgsqlCommand extends Command
             'port'      => (int) $this->option('port'),
             'database'  => $this->option('database'),
             'username'  => $this->option('username'),
-            'password'  => $this->option('password'),
+            'password'  => $this->option('password') ?? '',
             'charset'   => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'strict'    => false,
