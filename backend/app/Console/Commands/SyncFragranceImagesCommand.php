@@ -46,21 +46,25 @@ class SyncFragranceImagesCommand extends Command
         $this->info('╚══════════════════════════════════════════════════════╝');
         $this->info('');
 
-        $query = DB::table('fragrances')
+        // ── Base query: ALL Fragrantica fragrances (stable WHERE — no modification risk) ──
+        // We intentionally do NOT filter by whereNull('remote_image_url') here.
+        // Using whereNull in a chunk() query causes the classic "disappearing rows" bug:
+        // as rows get updated they fall out of the WHERE clause, shifting SQL OFFSETs and
+        // causing every other chunk to be silently skipped (~50% loss).
+        // Instead, we chunk ALL rows and skip already-populated ones in PHP.
+        $baseQuery = DB::table('fragrances')
             ->whereNotNull('external_source_url')
             ->where('external_source_url', 'like', '%fragrantica.com%');
 
-        if (! $force) {
-            $query->whereNull('remote_image_url');
-        }
+        $total     = (clone $baseQuery)->count();
+        $nullCount = (clone $baseQuery)->whereNull('remote_image_url')->count();
 
-        $total = $query->count();
-
-        $this->line("  Fragrances to process: " . number_format($total));
+        $this->line("  Total Fragrantica fragrances: " . number_format($total));
+        $this->line("  Missing image URL:            " . number_format($nullCount));
         $this->line("  Mode: " . ($dryRun ? 'dry-run (no writes)' : ($force ? 'overwrite all' : 'fill nulls only')));
         $this->info('');
 
-        if ($total === 0) {
+        if ($nullCount === 0 && ! $force) {
             $this->info('Nothing to update — all Fragrantica fragrances already have image URLs.');
             return Command::SUCCESS;
         }
@@ -72,16 +76,23 @@ class SyncFragranceImagesCommand extends Command
 
         $updated   = 0;
         $skipped   = 0;   // URL could not be derived (no numeric ID in URL)
-        $noChange  = 0;   // dry-run or already had URL
+        $noChange  = 0;   // already had a URL and --force not set
 
-        (clone $query)
-            ->orderBy('id')
-            ->select(['id', 'external_source_url'])
-            ->chunk($chunk, function ($rows) use ($dryRun, &$updated, &$skipped, &$noChange, $bar) {
+        // chunkById() uses WHERE id > last_id instead of OFFSET — safe to use
+        // even when rows are being modified, because we're not modifying the id column.
+        (clone $baseQuery)
+            ->select(['id', 'external_source_url', 'remote_image_url'])
+            ->chunkById($chunk, function ($rows) use ($dryRun, $force, &$updated, &$skipped, &$noChange, &$bar) {
 
                 $pairs = []; // [id => image_url]
 
                 foreach ($rows as $row) {
+                    // Skip rows that already have a URL (unless --force)
+                    if (! $force && $row->remote_image_url) {
+                        $noChange++;
+                        continue;
+                    }
+
                     $imageUrl = $this->deriveImageUrl($row->external_source_url);
 
                     if (! $imageUrl) {
@@ -137,7 +148,8 @@ class SyncFragranceImagesCommand extends Command
             ['Result', 'Count'],
             [
                 [$dryRun ? '<fg=cyan>Would update</>' : '<fg=green>Image URLs set</>',
-                    number_format($dryRun ? $noChange : $updated)],
+                    number_format($dryRun ? ($total - $skipped - $noChange) : $updated)],
+                ['<fg=cyan>Already had URL (skipped)</>', number_format($noChange)],
                 ['<fg=yellow>Skipped (no ID in URL)</>', number_format($skipped)],
             ]
         );
