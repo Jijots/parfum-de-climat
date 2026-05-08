@@ -37,11 +37,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-    {{-- Compiled CSS + JS (Vite) --}}
+    {{-- Compiled CSS + JS (Vite) — Alpine is bundled inside app.js (npm), no CDN needed --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    {{-- Alpine.js — CDN, deferred. Must load AFTER app.js registers the store. --}}
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 
     @stack('head')
 </head>
