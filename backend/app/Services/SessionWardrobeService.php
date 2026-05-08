@@ -30,8 +30,8 @@ class SessionWardrobeService
 
     public function isFavorite(Request $request, int $fragranceId): bool
     {
-        return (bool) $this->items($request)
-            ->firstWhere('fragrance_id', $fragranceId)['is_favorite'] ?? false;
+        $item = $this->items($request)->firstWhere('fragrance_id', $fragranceId);
+        return (bool) ($item['is_favorite'] ?? false);
     }
 
     public function toggle(Request $request, int $fragranceId): bool

@@ -154,14 +154,14 @@
     <div class="neu-raised rounded-2xl p-6 mb-6">
         <p class="text-xs text-[var(--muted)] uppercase tracking-widest mb-4">Accords</p>
         <div class="space-y-2">
-            @foreach ($item->accords->sortByDesc('weight')->take(8) as $accord)
+            @foreach ($item->accords->sortByDesc('strength')->take(8) as $accord)
             <div>
                 <div class="flex justify-between text-sm mb-1">
-                    <span class="text-[var(--ink)]">{{ $accord->name }}</span>
-                    <span class="text-[var(--muted)]">{{ round($accord->weight * 100) }}%</span>
+                    <span class="text-[var(--ink)]">{{ $accord->accord }}</span>
+                    <span class="text-[var(--muted)]">{{ round($accord->strength * 100) }}%</span>
                 </div>
                 <div class="h-1.5 w-full rounded-full bg-[var(--shadow-dark)] overflow-hidden">
-                    <div class="h-full rounded-full bg-[var(--color-accent)]/60" style="width: {{ round($accord->weight * 100) }}%"></div>
+                    <div class="h-full rounded-full bg-[var(--color-accent)]/60" style="width: {{ round($accord->strength * 100) }}%"></div>
                 </div>
             </div>
             @endforeach
