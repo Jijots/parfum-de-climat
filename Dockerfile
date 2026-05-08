@@ -5,7 +5,10 @@ RUN apt-get update && apt-get install -y \
         git curl zip unzip python3 python3-pip \
         libpng-dev libonig-dev libxml2-dev libzip-dev libicu-dev libpq-dev \
     && docker-php-ext-install pdo_mysql pdo_pgsql pgsql mbstring xml ctype bcmath zip gd intl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    # Debian only ships 'python3', not 'python'. Create a symlink so any legacy
+    # config that still has PYTHON_EXECUTABLE=python also works.
+    && ln -s /usr/bin/python3 /usr/bin/python
 
 # ── Node.js 20 ────────────────────────────────────────────────────────────────
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
@@ -60,4 +63,7 @@ RUN mkdir -p storage/framework/sessions \
 
 EXPOSE 8080
 
-CMD sh -c "php artisan migrate --force && php artisan db:seed --force --class=NoteClimateProfileSeeder || true && php artisan storage:link || true && php artisan serve --host=0.0.0.0 --port=8080"
+CMD sh -c "php artisan migrate --force \
+    && php artisan db:seed --force \
+    && php artisan storage:link || true \
+    && php artisan serve --host=0.0.0.0 --port=8080"

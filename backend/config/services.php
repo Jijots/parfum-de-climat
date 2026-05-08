@@ -64,7 +64,9 @@ return [
     */
     'engine' => [
         'mode'             => env('ENGINE_MODE', 'subprocess'),
-        'python_bin'       => env('PYTHON_EXECUTABLE', 'python'),
+        // Debian/Ubuntu Docker images only ship 'python3', not 'python'.
+        // Default to 'python3' so subprocess mode works without setting the env var.
+        'python_bin'       => env('PYTHON_EXECUTABLE', 'python3'),
         'script_path'      => env('ENGINE_SCRIPT_PATH', base_path('../engine/recommendation_engine.py')),
         'microservice_url' => env('ENGINE_MICROSERVICE_URL', 'http://127.0.0.1:8001'),
         'timeout'          => env('ENGINE_TIMEOUT', 30),
