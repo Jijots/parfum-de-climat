@@ -1,0 +1,52 @@
+{
+    "folders": [
+        {
+            "name": "Backend (Laravel)",
+            "path": "backend"
+        },
+        {
+            "name": "Engine (Python)",
+            "path": "engine"
+        },
+        {
+            "name": "Mobile (Flutter)",
+            "path": "mobile"
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/vendor/**": true,
+            "**/.dart_tool/**": true,
+            "**/node_modules/**": true,
+            "**/__pycache__/**": true,
+            "**/build/**": true,
+            "**/*.pyc": true
+        },
+        "search.exclude": {
+            "**/vendor/**": true,
+            "**/.dart_tool/**": true,
+            "**/node_modules/**": true,
+            "**/public/build/**": true,
+            "**/storage/framework/**": true
+        },
+        "editor.formatOnSave": false,
+        "php.suggest.basic": false,
+        "[php]": {
+            "editor.defaultFormatter": null
+        },
+        "[dart]": {
+            "editor.formatOnSave": true,
+            "editor.defaultFormatter": "Dart-Code.dart-code"
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "bmewburn.vscode-intelephense-client",
+            "onecentlin.laravel-blade",
+            "bradlc.vscode-tailwindcss",
+            "ms-python.python",
+            "Dart-Code.flutter",
+            "Dart-Code.dart-code"
+        ]
+    }
+}

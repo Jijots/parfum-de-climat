@@ -1,0 +1,85 @@
+# Parfum de Climat — Root .gitignore
+# Covers all three project layers: backend (Laravel), engine (Python), mobile (Flutter)
+
+# ─────────────────────────────────────────────
+# OS / Editor
+# ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.suo
+*.user
+*.swp
+*.swo
+*~
+
+# Claude Code project settings (local machine-specific)
+.claude/
+
+# ─────────────────────────────────────────────
+# backend/ — Laravel
+# ─────────────────────────────────────────────
+backend/.env
+backend/.env.*.local
+backend/vendor/
+backend/node_modules/
+backend/public/build/
+backend/public/hot
+backend/public/storage
+backend/storage/app/public/*
+!backend/storage/app/public/.gitignore
+backend/storage/framework/cache/
+backend/storage/framework/sessions/
+backend/storage/framework/testing/
+backend/storage/framework/views/
+backend/storage/logs/
+backend/bootstrap/cache/*.php
+!backend/bootstrap/cache/.gitignore
+backend/database/database.sqlite
+
+# ─────────────────────────────────────────────
+# engine/ — Python
+# ─────────────────────────────────────────────
+engine/venv/
+engine/.venv/
+engine/__pycache__/
+engine/*.pyc
+engine/*.pyo
+engine/*.pyd
+engine/.env
+engine/.pytest_cache/
+engine/dist/
+engine/build/
+engine/*.egg-info/
+
+# ─────────────────────────────────────────────
+# mobile/ — Flutter / Dart
+# ─────────────────────────────────────────────
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/.packages
+mobile/.idea/
+mobile/*.iml
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/app/google-services.json
+mobile/ios/.symlinks/
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/ephemeral/
+mobile/ios/Pods/
+mobile/ios/Podfile.lock
+mobile/ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+mobile/macos/Flutter/GeneratedPluginRegistrant.swift
+mobile/macos/Flutter/ephemeral/
+mobile/linux/flutter/generated_plugin_registrant.cc
+mobile/linux/flutter/generated_plugin_registrant.h
+mobile/linux/flutter/generated_plugins.cmake
+mobile/windows/flutter/generated_plugin_registrant.cc
+mobile/windows/flutter/generated_plugin_registrant.h
+mobile/windows/flutter/generated_plugins.cmake

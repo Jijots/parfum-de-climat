@@ -1,0 +1,69 @@
+name: parfum_de_climat
+description: "Climate-to-fragrance matching — recommends fragrances from your personal collection based on real-time local weather."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── State management ───────────────────────────────────────────────────────
+  # Riverpod: compile-safe, testable reactive state management.
+  flutter_riverpod: ^2.5.1
+
+  # ── HTTP ───────────────────────────────────────────────────────────────────
+  # Dio: interceptor-based HTTP client.
+  # Used for auth token injection, error normalisation, and timeout config.
+  dio: ^5.7.0
+
+  # ── Secure storage ────────────────────────────────────────────────────────
+  # Backed by Android Keystore / iOS Keychain — never stores tokens in prefs.
+  flutter_secure_storage: ^9.2.2
+
+  # ── Location ──────────────────────────────────────────────────────────────
+  geolocator: ^13.0.2
+  permission_handler: ^11.3.1
+
+  # ── Immutable models + JSON serialization ─────────────────────────────────
+  # freezed_annotation + json_annotation are runtime annotations.
+  # The code-gen tools (freezed, json_serializable) are dev-only.
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
+
+  # ── Routing ───────────────────────────────────────────────────────────────
+  # go_router: declarative URL-based navigation with auth guard redirect.
+  go_router: ^14.6.2
+
+  # ── UI utilities ──────────────────────────────────────────────────────────
+  # Cached images with placeholder / error fallback.
+  cached_network_image: ^3.4.1
+  # Google Fonts — Cormorant Garamond (editorial serif, Le Labo/Byredo vibe).
+  google_fonts: ^6.2.1
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # ── Code generation ───────────────────────────────────────────────────────
+  # Run: dart run build_runner build --delete-conflicting-outputs
+  # This generates the *.freezed.dart and *.g.dart files for all models.
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+
+  # Assets — bottle images are served from Laravel Storage.
+  # Local placeholder assets live here.
+  assets:
+    - assets/images/
+
+  # Cormorant Garamond is loaded via google_fonts at runtime — no local font files needed.
