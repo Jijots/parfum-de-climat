@@ -23,19 +23,30 @@ return new class extends Migration
             return; // MySQL / SQLite: LIKE is already fast enough at this scale
         }
 
-        // Enable the trigram extension (idempotent — safe to re-run)
-        DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+        try {
+            // Enable the trigram extension (idempotent — safe to re-run).
+            // Render's managed PostgreSQL includes pg_trgm; some self-hosted
+            // instances may require superuser. Wrapped in try/catch so a
+            // permission failure degrades gracefully instead of crashing the deploy.
+            DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
 
-        // GIN indexes — optimal for ILIKE '%...%' substring searches
-        DB::statement('
-            CREATE INDEX IF NOT EXISTS fragrances_name_trgm_idx
-            ON fragrances USING GIN (name gin_trgm_ops)
-        ');
+            // GIN indexes — optimal for ILIKE '%...%' substring searches
+            DB::statement('
+                CREATE INDEX IF NOT EXISTS fragrances_name_trgm_idx
+                ON fragrances USING GIN (name gin_trgm_ops)
+            ');
 
-        DB::statement('
-            CREATE INDEX IF NOT EXISTS fragrances_brand_trgm_idx
-            ON fragrances USING GIN (brand gin_trgm_ops)
-        ');
+            DB::statement('
+                CREATE INDEX IF NOT EXISTS fragrances_brand_trgm_idx
+                ON fragrances USING GIN (brand gin_trgm_ops)
+            ');
+        } catch (\Throwable $e) {
+            // pg_trgm unavailable — ILIKE still works, just without an index.
+            // Log the warning and continue so the deploy is not blocked.
+            \Illuminate\Support\Facades\Log::warning(
+                '[Migration] pg_trgm indexes skipped: ' . $e->getMessage()
+            );
+        }
     }
 
     public function down(): void
