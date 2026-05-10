@@ -37,7 +37,7 @@
 
             debounce() {
                 clearTimeout(this._debounceTimer);
-                this._debounceTimer = setTimeout(() => this.doSearch(1), 400);
+                this._debounceTimer = setTimeout(() => this.doSearch(1), 250);
             },
 
             async doSearch(page = 1) {
@@ -122,8 +122,12 @@
         {{-- Search + filters --}}
         <div class="mb-6 flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <svg x-show="!loading" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                </svg>
+                <svg x-show="loading" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-accent)] animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
                 <input type="text" x-model="search" placeholder="Search by name or brand…" class="input-field w-full pl-9">
             </div>
@@ -142,7 +146,7 @@
 
         <div class="relative min-h-[28rem]">
             {{-- Grid --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 transition-opacity duration-200" :class="loading ? 'opacity-50' : 'opacity-100'">
                 <template x-for="f in results" :key="f.id">
                     <div class="neu-raised rounded-2xl overflow-hidden group">
                     {{-- Image --}}
@@ -164,22 +168,24 @@
                             <p class="text-xs text-[var(--muted)] truncate" x-text="f.brand"></p>
                             <a :href="'{{ url('/fragrances') }}/' + f.id" class="block text-sm font-medium text-[var(--ink)] hover:text-[var(--color-accent)] transition-colors truncate mt-0.5" x-text="f.name"></a>
 
-                            <div class="mt-2 flex items-center justify-between">
+                            <div class="mt-2">
                                 <span
                                     class="text-xs px-2 py-0.5 rounded-full border border-[var(--hairline)] text-[var(--muted)]"
                                     x-text="f.gender === 'masculine' ? 'Men' : f.gender === 'feminine' ? 'Women' : 'Unisex'"
                                 ></span>
-                                <button
-                                    @click="toggleWardrobe(f.id)"
-                                    :title="f.in_wardrobe ? 'Remove from wardrobe' : 'Add to wardrobe'"
-                                    :class="f.in_wardrobe ? 'text-[var(--color-accent)]' : 'text-[var(--muted)] hover:text-[var(--color-accent)]'"
-                                    class="transition-colors"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :fill="f.in_wardrobe ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
-                                    </svg>
-                                </button>
                             </div>
+                            <button
+                                @click="toggleWardrobe(f.id)"
+                                :class="f.in_wardrobe
+                                    ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/30'
+                                    : 'text-[var(--muted)] hover:text-[var(--color-accent)] border-[var(--hairline)]'"
+                                class="mt-2 w-full flex items-center justify-center gap-1.5 rounded-lg border py-1.5 text-xs transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" :fill="f.in_wardrobe ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                                </svg>
+                                <span x-text="f.in_wardrobe ? 'In wardrobe' : 'Add to wardrobe'"></span>
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -190,17 +196,6 @@
                 </div>
             </div>
 
-            {{-- In-place loading layer --}}
-            <div
-                x-show="loading"
-                x-transition.opacity.duration.180ms
-                class="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[var(--surface)]/55 backdrop-blur-[1px]"
-            >
-                <div class="inline-flex items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--muted)] shadow-sm">
-                    <span class="inline-block h-2 w-2 rounded-full bg-[var(--color-accent)] animate-pulse"></span>
-                    Searching…
-                </div>
-            </div>
         </div>
 
         {{-- Pagination --}}

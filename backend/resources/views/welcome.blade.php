@@ -104,55 +104,90 @@
     {{-- How It Works Section --}}
     <section class="border-t border-[var(--hairline)] mx-auto max-w-6xl px-6 py-24">
 
-        <div class="grid gap-16 lg:grid-cols-2 lg:items-center">
+        <div class="text-center mb-14">
+            <p class="section-label mb-3">How It Works</p>
+            <h2 class="font-display text-[clamp(1.75rem,4vw,2.75rem)] font-light text-[var(--ink)]">
+                Two ways to find your scent.
+            </h2>
+        </div>
 
-            <div>
-                <p class="section-label mb-4">Under the Hood</p>
-                <h2 class="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-light text-[var(--ink)] mb-6">
-                    Intelligent notes,<br>not generic advice.
-                </h2>
-                <p class="text-base font-light text-[var(--muted)] leading-relaxed mb-8">
-                    Most fragrance apps suggest "wear citrus in summer." Parfum de Climat
-                    goes further — it profiles every individual note in your collection
-                    (Bergamot, Oud, Ambergris…) against real meteorological data and
-                    returns only the fragrances whose full note pyramid aligns best with
-                    right now.
-                </p>
+        <div class="grid gap-6 lg:grid-cols-2">
 
-                <ul class="space-y-4">
+            {{-- Path A: Quick recommendation --}}
+            <div class="glass rounded-2xl p-8 flex flex-col">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-accent)] text-white text-sm font-medium shrink-0">A</span>
+                    <div>
+                        <h3 class="font-display text-xl font-light text-[var(--ink)]">Quick Recommendation</h3>
+                        <p class="text-xs text-[var(--muted)] mt-0.5">No account needed</p>
+                    </div>
+                </div>
+
+                <ol class="space-y-5 flex-1">
                     @foreach ([
-                        ['Temperature', '50% weight: note optimal ranges vs. current °C'],
-                        ['Season',      '35% weight: spring / summer / autumn / winter affinity'],
-                        ['Humidity',    '15% weight: low / medium / high / any preference'],
-                    ] as [$label, $desc])
-                        <li class="flex items-start gap-4">
-                            <span class="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-accent)]"></span>
+                        ['Open the Recommend page',       'Hit "Try a Recommendation" and share your location — or just type a city name.'],
+                        ['Weather is fetched in real time', 'Temperature, humidity, and current season are read from OpenWeatherMap for your exact location.'],
+                        ['Get your top 3 matches',         'The scoring engine ranks every fragrance in the catalog and surfaces the three best fits for today\'s conditions.'],
+                    ] as $i => [$title, $body])
+                        <li class="flex gap-4">
+                            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)]/15 text-xs font-medium text-[var(--color-accent)]">{{ $i + 1 }}</span>
                             <div>
-                                <span class="text-sm font-medium text-[var(--ink)]">{{ $label }}</span>
-                                <span class="text-sm font-light text-[var(--muted)]">  {{ $desc }}</span>
+                                <p class="text-sm font-medium text-[var(--ink)]">{{ $title }}</p>
+                                <p class="text-sm font-light text-[var(--muted)] mt-0.5 leading-relaxed">{{ $body }}</p>
                             </div>
                         </li>
                     @endforeach
-                </ul>
+                </ol>
+
+                <a href="{{ route('app') }}" class="btn-primary mt-8 self-start">Try a Recommendation</a>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                @foreach ([
-                    ['Laravel 11',       'API + Admin Web Panel'],
-                    ['Python Engine',    'Pydantic scoring algorithm'],
-                    ['Flutter',          'iOS + Android mobile app'],
-                    ['OpenWeatherMap',   'Real-time GPS weather data'],
-                    ['Laravel Sanctum',  'Token-based mobile auth'],
-                    ['Tailwind CSS v4',  'Design system + dark mode'],
-                ] as [$tech, $role])
-                    <div class="glass rounded-lg px-4 py-4">
-                        <p class="font-display text-base font-light text-[var(--ink)]">{{ $tech }}</p>
-                        <p class="text-xs font-light text-[var(--muted)] mt-1">{{ $role }}</p>
+            {{-- Path B: From your wardrobe --}}
+            <div class="glass rounded-2xl p-8 flex flex-col">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-medium shrink-0">B</span>
+                    <div>
+                        <h3 class="font-display text-xl font-light text-[var(--ink)]">From Your Wardrobe</h3>
+                        <p class="text-xs text-[var(--muted)] mt-0.5">Personalised to what you own</p>
                     </div>
-                @endforeach
+                </div>
+
+                <ol class="space-y-5 flex-1">
+                    @foreach ([
+                        ['Build your wardrobe',                    'Browse 3 000+ fragrances and add the ones you own. Mark favourites for a subtle score boost.'],
+                        ['The engine profiles your collection',    'Each fragrance is scored by its note pyramid — top, heart, and base — across temperature, humidity, and season.'],
+                        ['Get recommendations from bottles you own', 'Results are drawn exclusively from your wardrobe, so every suggestion is something you can actually wear today.'],
+                    ] as $i => [$title, $body])
+                        <li class="flex gap-4">
+                            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--color-accent)]/40 text-xs font-medium text-[var(--color-accent)]">{{ $i + 1 }}</span>
+                            <div>
+                                <p class="text-sm font-medium text-[var(--ink)]">{{ $title }}</p>
+                                <p class="text-sm font-light text-[var(--muted)] mt-0.5 leading-relaxed">{{ $body }}</p>
+                            </div>
+                        </li>
+                    @endforeach
+                </ol>
+
+                <a href="{{ route('browse') }}" class="btn-ghost mt-8 self-start">Browse Fragrances</a>
             </div>
 
         </div>
+
+        {{-- Scoring weights strip --}}
+        <div class="mt-8 glass rounded-xl px-6 py-5 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 text-center">
+            <p class="text-xs uppercase tracking-widest text-[var(--muted)]">Scoring weights</p>
+            @foreach ([
+                ['Temperature', '50%'],
+                ['Season',      '35%'],
+                ['Humidity',    '15%'],
+            ] as [$label, $pct])
+                <div>
+                    <p class="font-display text-2xl font-light text-[var(--color-accent)]">{{ $pct }}</p>
+                    <p class="text-xs text-[var(--muted)] mt-0.5">{{ $label }}</p>
+                </div>
+            @endforeach
+        </div>
+
     </section>
 
     {{-- CTA Strip Section --}}
