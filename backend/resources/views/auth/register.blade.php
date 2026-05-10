@@ -3,7 +3,7 @@
 @section('title', 'Create Account')
 
 @section('content')
-<div class="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-6 py-12">
+<div class="flex min-h-[calc(100vh-6rem)] md:min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
     <div class="w-full max-w-sm">
 
         <div class="mb-8 text-center">

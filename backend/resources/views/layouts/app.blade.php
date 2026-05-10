@@ -62,12 +62,12 @@
             <div class="hidden md:flex items-center">
                 <nav class="flex items-center gap-6 text-sm">
                     {{-- Public routes: always visible --}}
-                    <a href="{{ route('app') }}" class="text-[var(--muted)] hover:text-[var(--ink)] transition-colors {{ request()->routeIs('app') ? 'text-[var(--ink)]' : '' }}">Recommend</a>
-                    <a href="{{ route('browse') }}" class="text-[var(--muted)] hover:text-[var(--ink)] transition-colors {{ request()->routeIs('browse*') ? 'text-[var(--ink)]' : '' }}">Browse</a>
-                    <a href="{{ route('wardrobe') }}" class="text-[var(--muted)] hover:text-[var(--ink)] transition-colors {{ request()->routeIs('wardrobe') ? 'text-[var(--ink)]' : '' }}">Wardrobe</a>
+                    <a href="{{ route('app') }}"      class="transition-colors {{ request()->routeIs('app')      ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Recommend</a>
+                    <a href="{{ route('browse') }}"   class="transition-colors {{ request()->routeIs('browse*')  ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Browse</a>
+                    <a href="{{ route('wardrobe') }}" class="transition-colors {{ request()->routeIs('wardrobe') ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Wardrobe</a>
                     @auth
                     @if (auth()->user()->hasVerifiedEmail())
-                    <a href="{{ route('history') }}" class="text-[var(--muted)] hover:text-[var(--ink)] transition-colors {{ request()->routeIs('history') ? 'text-[var(--ink)]' : '' }}">History</a>
+                    <a href="{{ route('history') }}"  class="transition-colors {{ request()->routeIs('history')  ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">History</a>
                     @endif
                     @endauth
                 </nav>
@@ -132,40 +132,63 @@
 
         {{-- Mobile nav --}}
         <div class="md:hidden border-t border-[var(--hairline)] flex overflow-x-auto">
-            <a href="{{ route('app') }}" class="flex-1 py-2 text-center text-xs {{ request()->routeIs('app') ? 'text-[var(--ink)]' : 'text-[var(--muted)]' }}">Recommend</a>
-            <a href="{{ route('browse') }}" class="flex-1 py-2 text-center text-xs {{ request()->routeIs('browse*') ? 'text-[var(--ink)]' : 'text-[var(--muted)]' }}">Browse</a>
-            <a href="{{ route('wardrobe') }}" class="flex-1 py-2 text-center text-xs {{ request()->routeIs('wardrobe') ? 'text-[var(--ink)]' : 'text-[var(--muted)]' }}">Wardrobe</a>
+            <a href="{{ route('app') }}"      class="flex-1 py-2 text-center text-xs font-medium transition-colors {{ request()->routeIs('app')      ? 'text-[var(--color-accent)]' : 'text-[var(--muted)]' }}">Recommend</a>
+            <a href="{{ route('browse') }}"   class="flex-1 py-2 text-center text-xs font-medium transition-colors {{ request()->routeIs('browse*')  ? 'text-[var(--color-accent)]' : 'text-[var(--muted)]' }}">Browse</a>
+            <a href="{{ route('wardrobe') }}" class="flex-1 py-2 text-center text-xs font-medium transition-colors {{ request()->routeIs('wardrobe') ? 'text-[var(--color-accent)]' : 'text-[var(--muted)]' }}">Wardrobe</a>
             @auth
             @if (auth()->user()->hasVerifiedEmail())
-            <a href="{{ route('history') }}" class="flex-1 py-2 text-center text-xs {{ request()->routeIs('history') ? 'text-[var(--ink)]' : 'text-[var(--muted)]' }}">History</a>
+            <a href="{{ route('history') }}"  class="flex-1 py-2 text-center text-xs font-medium transition-colors {{ request()->routeIs('history')  ? 'text-[var(--color-accent)]' : 'text-[var(--muted)]' }}">History</a>
             @endif
             @endauth
         </div>
     </header>
 
-    @auth
-        @if (! auth()->user()->hasVerifiedEmail())
-            <div class="border-b border-[var(--hairline)] bg-[var(--color-accent)]/8 px-6 py-2 text-center text-xs text-[var(--ink)]">
-                Verify your email to unlock saved history and account-level tracking.
-                <a href="{{ route('verification.notice') }}" class="ml-1 text-[var(--color-accent)] hover:underline">Review verification</a>
-            </div>
-        @endif
-    @endauth
-
     {{-- ── Page Content ──────────────────────────────────────────────────── --}}
-    {{-- pt-16 offsets the fixed header height --}}
-    <main class="pt-16">
+    {{--
+        pt-24 md:pt-16 — the fixed header is 64px (h-16) on all viewports, but
+        on mobile the secondary tab-nav strip adds ~33px, making the total
+        mobile header ~97px. pt-24 (96px) covers that; md:pt-16 snaps back to
+        64px once the tab strip is hidden.
+    --}}
+    <main class="pt-24 md:pt-16">
+
+        {{-- Email verification nudge — lives inside <main> so it sits below  --}}
+        {{-- the fixed header in normal flow rather than hiding behind it.     --}}
+        @auth
+            @if (! auth()->user()->hasVerifiedEmail())
+                <div class="border-b border-[var(--hairline)] bg-[var(--color-accent)]/8 px-6 py-2 text-center text-xs text-[var(--ink)]">
+                    Verify your email to unlock saved history and account-level tracking.
+                    <a href="{{ route('verification.notice') }}" class="ml-1 text-[var(--color-accent)] hover:underline">Review verification</a>
+                </div>
+            @endif
+        @endauth
+
         @yield('content')
     </main>
 
     {{-- ── Footer ────────────────────────────────────────────────────────── --}}
     <footer class="border-t border-[var(--hairline)] mt-24 py-10">
-        <div class="mx-auto max-w-6xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="mx-auto max-w-6xl px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
             <p class="font-display text-base font-light text-[var(--muted)]">
                 Parfum <span class="text-[var(--color-accent)]">de</span> Climat
             </p>
+
+            {{-- Footer nav links --}}
+            <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                <a href="{{ route('app') }}"      class="text-xs text-[var(--muted)] hover:text-[var(--ink)] transition-colors">Recommend</a>
+                <a href="{{ route('browse') }}"   class="text-xs text-[var(--muted)] hover:text-[var(--ink)] transition-colors">Browse</a>
+                <a href="{{ route('wardrobe') }}" class="text-xs text-[var(--muted)] hover:text-[var(--ink)] transition-colors">Wardrobe</a>
+                @auth
+                    <a href="{{ route('history') }}" class="text-xs text-[var(--muted)] hover:text-[var(--ink)] transition-colors">History</a>
+                    <a href="{{ route('profile') }}" class="text-xs text-[var(--muted)] hover:text-[var(--ink)] transition-colors">Profile</a>
+                @else
+                    <a href="{{ route('register') }}" class="text-xs text-[var(--muted)] hover:text-[var(--ink)] transition-colors">Get started</a>
+                    <a href="{{ route('login') }}"    class="text-xs text-[var(--muted)] hover:text-[var(--ink)] transition-colors">Sign in</a>
+                @endauth
+            </nav>
+
             <p class="text-xs text-[var(--muted)]">
-                © {{ date('Y') }} — A portfolio project. Fragrance data sourced from public datasets.
+                © {{ date('Y') }} — A portfolio project.
             </p>
         </div>
     </footer>

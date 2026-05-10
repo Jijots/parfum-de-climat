@@ -6,7 +6,7 @@
 @section('content')
 
     {{-- Hero Section --}}
-    <section class="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center overflow-hidden px-6 py-24">
+    <section class="relative flex min-h-[calc(100vh-6rem)] md:min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-6 py-24">
 
         {{-- Single permitted accent glow: one static radial gradient, no animation --}}
         <div class="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
@@ -113,7 +113,7 @@
                 </h2>
                 <p class="text-base font-light text-[var(--muted)] leading-relaxed mb-8">
                     Most fragrance apps suggest "wear citrus in summer." Parfum de Climat
-                    goes further it profiles every individual note in your collection
+                    goes further — it profiles every individual note in your collection
                     (Bergamot, Oud, Ambergris…) against real meteorological data and
                     returns only the fragrances whose full note pyramid aligns best with
                     right now.

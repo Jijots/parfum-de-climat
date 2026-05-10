@@ -4,8 +4,7 @@
 
 @section('content')
 <div
-    class="mx-auto px-6 py-16"
-    style="max-width: 1152px;"
+    class="mx-auto max-w-6xl px-6 py-16"
     x-data="{
         status: 'idle',
         weather: null,
@@ -148,7 +147,7 @@
                 <div style="width: 100%; border-top: 1px solid var(--hairline);"></div>
             </div>
             <div style="position: relative; display: flex; justify-content: center;">
-                <span class="text-[var(--muted)]" style="background: transparent; padding: 0 0.75rem; font-size: 0.75rem;">or enter a city</span>
+                <span class="text-[var(--muted)]" style="background: var(--surface-bg); padding: 0 0.75rem; font-size: 0.75rem;">or enter a city</span>
             </div>
         </div>
 
@@ -159,23 +158,23 @@
     </div>
 
     {{-- Loading skeleton --}}
-    <div x-show="status === 'loading'" x-transition style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <div class="glass animate-pulse" style="border-radius: 1rem; padding: 1.5rem;">
-            <div class="bg-[var(--shadow-dark)]" style="height: 12px; width: 100px; border-radius: 4px; margin-bottom: 1rem;"></div>
-            <div class="bg-[var(--shadow-dark)]" style="height: 48px; width: 180px; border-radius: 4px; margin-bottom: 0.75rem;"></div>
-            <div style="display: flex; gap: 1.5rem;">
-                <div class="bg-[var(--shadow-dark)]" style="height: 14px; width: 70px; border-radius: 4px;"></div>
-                <div class="bg-[var(--shadow-dark)]" style="height: 14px; width: 90px; border-radius: 4px;"></div>
+    <div x-show="status === 'loading'" x-transition class="flex flex-col gap-6">
+        <div class="glass animate-pulse rounded-2xl p-6">
+            <div class="bg-[var(--shadow-dark)] h-3 w-24 rounded mb-4"></div>
+            <div class="bg-[var(--shadow-dark)] h-12 w-44 rounded mb-3"></div>
+            <div class="flex gap-6">
+                <div class="bg-[var(--shadow-dark)] h-3.5 w-16 rounded"></div>
+                <div class="bg-[var(--shadow-dark)] h-3.5 w-20 rounded"></div>
             </div>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <template x-for="i in 3" :key="i">
-                <div class="neu-raised animate-pulse" style="border-radius: 1rem; overflow: hidden;">
-                    <div class="bg-[var(--shadow-dark)]" style="height: 220px;"></div>
-                    <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                        <div class="bg-[var(--shadow-dark)]" style="height: 14px; width: 70%; border-radius: 4px;"></div>
-                        <div class="bg-[var(--shadow-dark)]" style="height: 11px; width: 50%; border-radius: 4px;"></div>
-                        <div class="bg-[var(--shadow-dark)]" style="height: 8px; width: 100%; border-radius: 4px;"></div>
+                <div class="neu-raised animate-pulse rounded-2xl overflow-hidden">
+                    <div class="bg-[var(--shadow-dark)] h-52"></div>
+                    <div class="p-4 flex flex-col gap-3">
+                        <div class="bg-[var(--shadow-dark)] h-3.5 w-3/4 rounded"></div>
+                        <div class="bg-[var(--shadow-dark)] h-3 w-1/2 rounded"></div>
+                        <div class="bg-[var(--shadow-dark)] h-2 w-full rounded"></div>
                     </div>
                 </div>
             </template>
@@ -282,7 +281,7 @@
 
         {{-- Recommendation cards — x-show on wrapper, grid on inner div --}}
         <div x-show="recommendations.length > 0">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <template x-for="(rec, index) in recommendations" :key="rec.fragrance_id">
                     <div class="neu-raised" style="border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column;">
 
@@ -358,7 +357,7 @@
                 <h2 class="font-display text-[var(--ink)]" style="font-size: 1.25rem; font-weight: 300;">Recommended Pick-Ups</h2>
                 <p class="text-[var(--muted)]" style="font-size: 0.75rem; margin-top: 0.25rem;">Fragrances outside your wardrobe that suit today's weather and match your taste profile.</p>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <template x-for="rec in pickUps" :key="rec.fragrance_id">
                     <div class="glass" style="border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--hairline);">
 

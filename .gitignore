@@ -18,6 +18,9 @@ desktop.ini
 # Claude Code project settings (local machine-specific)
 .claude/
 
+# Design reference folder — local only, not part of the project source
+awesome-design-md/
+
 # ─────────────────────────────────────────────
 # backend/ — Laravel
 # ─────────────────────────────────────────────
