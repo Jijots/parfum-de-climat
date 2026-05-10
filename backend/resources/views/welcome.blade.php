@@ -29,8 +29,8 @@
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="{{ route('register') }}" class="btn-primary">Get Started Free</a>
-                <a href="#features" class="btn-ghost">How It Works</a>
+                <a href="{{ route('app') }}" class="btn-primary">Try a Recommendation</a>
+                <a href="{{ route('register') }}" class="btn-ghost">Get Started Free</a>
             </div>
 
         </div>

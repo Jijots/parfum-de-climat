@@ -227,7 +227,7 @@
                         <p class="text-[var(--ink)]" style="font-size: 0.875rem; font-weight: 500; line-height: 1.3;" x-text="weather?.location"></p>
                     </div>
 
-                    {{-- Detail rows --}}
+                    {{-- Detail rows — fixed label width keeps values immediately to the right --}}
                     <div style="display: flex; flex-direction: column;">
                         <template x-for="row in [
                             { label: 'Feels like', value: weather?.feels_like + '°C' },
@@ -236,8 +236,8 @@
                             { label: 'Wind',        value: weather?.wind_speed + ' m/s' },
                             { label: 'Pressure',    value: weather?.pressure ? weather?.pressure + ' hPa' : '—' },
                         ]" :key="row.label">
-                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0.4rem 0; border-bottom: 1px solid var(--hairline);">
-                                <span class="text-[var(--muted)]" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.09em;" x-text="row.label"></span>
+                            <div style="display: flex; align-items: baseline; gap: 1rem; padding: 0.4rem 0; border-bottom: 1px solid var(--hairline);">
+                                <span class="text-[var(--muted)]" style="min-width: 5.5rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.09em; flex-shrink: 0;" x-text="row.label"></span>
                                 <span class="text-[var(--ink)]" style="font-size: 0.875rem; font-weight: 400;" x-text="row.value"></span>
                             </div>
                         </template>
