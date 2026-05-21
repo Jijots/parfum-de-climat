@@ -28,13 +28,13 @@ class ApiEndpoints {
   // Falls back to parfum.local for local simulator / web development.
   static const String baseUrl = String.fromEnvironment(
     'BACKEND_URL',
-    defaultValue: 'http://parfum.local/api/v1',
+    defaultValue: 'https://parfumdeclimat.app/api/v1',
   );
 
   /// Laravel Storage origin — derived from BACKEND_URL automatically.
   static const String storageBaseUrl = String.fromEnvironment(
     'STORAGE_URL',
-    defaultValue: 'http://parfum.local/storage',
+    defaultValue: 'https://parfumdeclimat.app/storage',
   );
 
   // Auth

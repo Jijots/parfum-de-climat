@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       backend_url:
-        description: "Backend URL — your computer's LAN IP, e.g. http://192.168.1.42/api/v1"
+        description: "Backend API URL"
         required: true
-        default: "http://parfum.local/api/v1"
+        default: "https://parfumdeclimat.app/api/v1"
       storage_url:
-        description: "Laravel Storage URL — same host, e.g. http://192.168.1.42/storage"
+        description: "Laravel Storage URL"
         required: true
-        default: "http://parfum.local/storage"
+        default: "https://parfumdeclimat.app/storage"
 
 jobs:
   build:
