@@ -24,12 +24,18 @@ class ApiEndpoints {
   //   Physical iPhone (Wi-Fi)         → http://<your-machine-LAN-IP>/api/v1
   //                                     Add NSAllowsArbitraryLoads=true to Info.plist
   //                                     for dev builds, or set up HTTPS on the backend.
-  static const String baseUrl =
-      'http://parfum.local/api/v1';
+  // Injected at build time via --dart-define=BACKEND_URL=http://192.168.x.x
+  // Falls back to parfum.local for local simulator / web development.
+  static const String baseUrl = String.fromEnvironment(
+    'BACKEND_URL',
+    defaultValue: 'http://parfum.local/api/v1',
+  );
 
-  /// Laravel Storage origin — used to build full image URLs from relative paths.
-  static const String storageBaseUrl =
-      'http://parfum.local/storage';
+  /// Laravel Storage origin — derived from BACKEND_URL automatically.
+  static const String storageBaseUrl = String.fromEnvironment(
+    'STORAGE_URL',
+    defaultValue: 'http://parfum.local/storage',
+  );
 
   // Auth
   static const String register = '/auth/register';
