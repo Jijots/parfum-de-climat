@@ -10,9 +10,14 @@ class ApiEndpoints {
   // Base URL
   // Switch the active URL based on your current target:
   //   Flutter WEB or Windows desktop  → http://parfum.local/api/v1
+  //   iOS Simulator                   → http://parfum.local/api/v1
+  //                                     (simulator routes through the Mac host's network stack,
+  //                                      so the same .local mDNS hostname resolves correctly)
   //   Android emulator                → http://10.0.2.2/api/v1
   //                                     (10.0.2.2 is the emulator's alias for host localhost)
-  //   Physical Android device         → use your machine's LAN IP (e.g. 192.168.x.x)
+  //   Physical device (iOS/Android)   → use your machine's LAN IP (e.g. http://192.168.x.x/api/v1)
+  //                                     On iOS, also add NSAllowsArbitraryLoads=true in Info.plist
+  //                                     for dev, or set up HTTPS on the backend.
   static const String baseUrl =
       'http://parfum.local/api/v1';
 

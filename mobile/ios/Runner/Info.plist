@@ -26,6 +26,22 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- Location permission strings required by geolocator / permission_handler -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Parfum de Climat uses your location to fetch real-time local weather so it can recommend the most fitting fragrance from your collection.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Parfum de Climat uses your location to fetch real-time local weather so it can recommend the most fitting fragrance from your collection.</string>
+
+	<!-- App Transport Security: allow HTTP to the local dev server (parfum.local).
+	     NSAllowsLocalNetworking permits connections to .local mDNS hosts without HTTPS.
+	     For a physical iPhone on LAN using an IP address, either configure HTTPS on the
+	     backend or temporarily add NSAllowsArbitraryLoads=true during development only. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
