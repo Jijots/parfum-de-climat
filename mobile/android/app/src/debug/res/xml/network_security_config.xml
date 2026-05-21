@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Debug builds: allow plain HTTP to any host.
+         This lets a physical Android phone reach the backend via a raw LAN IP
+         (e.g. http://192.168.x.x/api/v1) without requiring HTTPS.
+         Also trusts user-installed certificates (Charles, Proxyman, mitmproxy). -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>
