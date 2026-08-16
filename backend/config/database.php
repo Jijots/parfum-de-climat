@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', 'pgsql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -96,7 +96,11 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => env('DB_SSLMODE', 'require'),
+            // Neon SNI workaround for old libpq — see App\Database\NeonPostgresConnector.
+            // Set to the first segment of your Neon host. Leave blank on production
+            // servers with modern libpq (SNI works automatically there).
+            'neon_endpoint' => env('DB_NEON_ENDPOINT', ''),
         ],
 
         'sqlsrv' => [

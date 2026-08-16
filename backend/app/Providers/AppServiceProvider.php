@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Database\NeonPostgresConnector;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Replace the built-in pgsql connector with one that supports the
+        // Neon endpoint-ID workaround for older libpq (no SNI support).
+        $this->app->bind('db.connector.pgsql', NeonPostgresConnector::class);
     }
 
     /**
