@@ -127,9 +127,14 @@
 
     {{-- Notes pyramid --}}
     @php
-        $top    = $item->topNotes->pluck('raw_note_name');
-        $heart  = $item->heartNotes->pluck('raw_note_name');
-        $base   = $item->baseNotes->pluck('raw_note_name');
+        // Derived from the already-loaded notes relation rather than the
+        // topNotes/heartNotes/baseNotes relations. Those are filtered subsets of
+        // the same table, so using them here cost three extra queries per page —
+        // and would lazy-load straight past the cache on a cached $item.
+        $byLayer = $item->notes->groupBy('layer');
+        $top     = $byLayer->get('top',   collect())->pluck('raw_note_name');
+        $heart   = $byLayer->get('heart', collect())->pluck('raw_note_name');
+        $base    = $byLayer->get('base',  collect())->pluck('raw_note_name');
     @endphp
     @if ($top->isNotEmpty() || $heart->isNotEmpty() || $base->isNotEmpty())
     <div class="neu-raised rounded-2xl p-6 mb-6">
@@ -174,6 +179,54 @@
     <a href="{{ $item->external_source_url }}" target="_blank" rel="noopener noreferrer" class="btn-ghost w-full justify-center text-sm mt-2">
         View on Fragrantica ↗
     </a>
+    @endif
+
+    {{-- Smells like this --------------------------------------------------
+         Pre-computed neighbours from the TF-IDF + cosine similarity index.
+         See FragranceController::similarFragrances(). --}}
+    @if ($similar->isNotEmpty())
+    <div class="mt-10">
+        <div class="flex items-baseline justify-between mb-4">
+            <h2 class="font-display text-2xl font-light text-[var(--ink)]">Smells like this</h2>
+            <span class="text-xs text-[var(--muted)]">matched on shared notes</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            @foreach ($similar as $s)
+            <a href="{{ url('/fragrances/' . $s['id']) }}" class="neu-raised rounded-2xl overflow-hidden group block">
+                <div class="relative aspect-square bg-[var(--shadow-dark)]/30 overflow-hidden">
+                    @if ($s['image_url'])
+                        <img
+                            src="{{ $s['image_url'] }}"
+                            alt="{{ $s['name'] }}"
+                            class="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                        >
+                    @else
+                        <div class="w-full h-full flex items-center justify-center text-[var(--muted)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 opacity-25" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z"/></svg>
+                        </div>
+                    @endif
+
+                    <span class="absolute top-2 right-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--color-accent)] text-white shadow">
+                        {{ $s['match'] }}%
+                    </span>
+
+                    @if ($s['in_wardrobe'])
+                        <span class="absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded-full bg-[var(--ink)]/70 text-white">
+                            In wardrobe
+                        </span>
+                    @endif
+                </div>
+
+                <div class="p-3">
+                    <p class="text-xs text-[var(--muted)] truncate">{{ $s['brand'] }}</p>
+                    <p class="text-sm font-medium text-[var(--ink)] group-hover:text-[var(--color-accent)] transition-colors truncate mt-0.5">{{ $s['name'] }}</p>
+                </div>
+            </a>
+            @endforeach
+        </div>
+    </div>
     @endif
 
 </div>

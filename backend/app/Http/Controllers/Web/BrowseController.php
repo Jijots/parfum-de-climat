@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Fragrance;
 use App\Models\UserCollection;
+use App\Services\CatalogCache;
 use App\Services\SessionWardrobeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class BrowseController extends Controller
 {
@@ -41,6 +43,7 @@ class BrowseController extends Controller
 
     public function __construct(
         private readonly SessionWardrobeService $sessionWardrobe,
+        private readonly CatalogCache $cache,
     ) {}
 
     public function index(Request $request)
@@ -71,7 +74,28 @@ class BrowseController extends Controller
             'has_profile' => $f->mapped_notes_count > 0,
         ])->values();
 
-        return view('app.browse', compact('fragrances', 'collectionIds', 'initialResults'));
+        // Ported to Inertia/React. Sibling pages still return Blade views —
+        // Inertia only intercepts responses built with Inertia::render(), so the
+        // two coexist and pages can move over one at a time.
+        return Inertia::render('Browse', [
+            'initialResults' => $initialResults,
+            'filters'        => [
+                'search' => (string) $request->input('search', ''),
+                'gender' => (string) $request->input('gender', 'all'),
+            ],
+            'pagination' => [
+                'current_page' => $fragrances->currentPage(),
+                'last_page'    => $fragrances->lastPage(),
+            ],
+            'total' => $fragrances->total(),
+            // Named routes resolved here rather than shipping the route table
+            // to the browser via Ziggy.
+            'urls' => [
+                'search'          => route('browse.search'),
+                'fragrance'       => url('/fragrances'),
+                'wardrobeToggle'  => url('/wardrobe'),
+            ],
+        ]);
     }
 
     public function search(Request $request): JsonResponse
@@ -88,27 +112,44 @@ class BrowseController extends Controller
             $query->where('gender_target', $request->gender);
         }
 
-        $fragrances    = $query->orderBy('brand')->orderBy('name')->paginate(24);
+        $term   = $request->input('q', '');
+        $gender = (string) $request->input('gender', 'all');
+        $page   = max(1, (int) $request->input('page', 1));
+
+        // Shared payload — the same for every visitor, so it caches safely.
+        // Wardrobe state is excluded here and resolved per request below.
+        $payload = $this->cache->browse($term ?? '', $gender, $page, function () use ($query) {
+            $fragrances = $query->orderBy('brand')->orderBy('name')->paginate(24);
+
+            return [
+                'fragrances'    => $fragrances->map(fn ($f) => [
+                    'id'          => $f->id,
+                    'name'        => $f->name,
+                    'brand'       => $f->brand,
+                    'gender'      => $f->gender_target,
+                    'image_url'   => $f->getImageUrl(),
+                    'rating'      => $f->rating,
+                    'has_profile' => $f->mapped_notes_count > 0,
+                ])->values()->all(),
+                'next_page_url' => $fragrances->nextPageUrl(),
+                'total'         => $fragrances->total(),
+                'current_page'  => $fragrances->currentPage(),
+                'last_page'     => $fragrances->lastPage(),
+            ];
+        });
+
+        // Per-user state — never cached.
         $collectionIds = $user
             ? UserCollection::where('user_id', $user->id)->pluck('fragrance_id')->toArray()
             : $this->sessionWardrobe->fragranceIds($request);
 
-        return response()->json([
-            'fragrances'    => $fragrances->map(fn ($f) => [
-                'id'          => $f->id,
-                'name'        => $f->name,
-                'brand'       => $f->brand,
-                'gender'      => $f->gender_target,
-                'image_url'   => $f->getImageUrl(),
-                'rating'      => $f->rating,
-                'in_wardrobe' => in_array($f->id, $collectionIds),
-                'has_profile' => $f->mapped_notes_count > 0,
-            ])->values(),
-            'next_page_url' => $fragrances->nextPageUrl(),
-            'total'         => $fragrances->total(),
-            'current_page'  => $fragrances->currentPage(),
-            'last_page'     => $fragrances->lastPage(),
-        ]);
+        $payload['fragrances'] = array_map(function (array $row) use ($collectionIds) {
+            $row['in_wardrobe'] = in_array($row['id'], $collectionIds);
+
+            return $row;
+        }, $payload['fragrances']);
+
+        return response()->json($payload);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -122,9 +163,13 @@ class BrowseController extends Controller
      * Also expands known brand abbreviations: searching "YSL" will match
      * fragrances whose brand contains "yves saint laurent".
      */
-    private function applySearch(Builder $query, string $term): void
+    private function applySearch(Builder $query, ?string $term): void
     {
-        $term = trim($term);
+        // $term is nullable because Laravel's ConvertEmptyStringsToNull middleware
+        // rewrites "?q=" to null. A default on input('q', '') does NOT cover that —
+        // defaults only apply when the key is absent, and here the key is present
+        // with a null value. Accepting null here keeps every caller safe.
+        $term = trim($term ?? '');
         if ($term === '') {
             return;
         }

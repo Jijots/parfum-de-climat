@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -31,6 +32,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // 'admin' → guards routes that require the admin role.
         // API usage:  Route::middleware(['auth:sanctum', 'admin'])
         // Web usage:  Route::middleware(['auth', 'admin'])
+        // ── Inertia ────────────────────────────────────────────────────────
+        // Appended to the web group only. Routes still returning Blade views
+        // are unaffected — Inertia only takes over for responses built with
+        // Inertia::render(), so pages can be ported one at a time.
+        $middleware->web(append: [
+            HandleInertiaRequests::class,
+        ]);
+
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
         ]);

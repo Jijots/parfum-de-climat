@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Fragrance;
 use App\Models\UserCollection;
+use App\Services\CatalogCache;
 use App\Services\SessionWardrobeService;
 use Illuminate\Http\Request;
 
@@ -12,13 +13,21 @@ class FragranceController extends Controller
 {
     public function __construct(
         private readonly SessionWardrobeService $sessionWardrobe,
+        private readonly CatalogCache $cache,
     ) {}
 
     public function show(Request $request, int $fragrance)
     {
-        $item = Fragrance::where('is_active', true)
-            ->with(['notes.profile', 'accords', 'topNotes.profile', 'heartNotes.profile', 'baseNotes.profile'])
-            ->findOrFail($fragrance);
+        // The record itself is the same for everyone, so it is cached. Only
+        // 'notes.profile' and 'accords' are eager-loaded here: topNotes,
+        // heartNotes and baseNotes are filtered subsets of the same table, and
+        // loading them separately meant four round-trips for one fragrance.
+        // The view derives the three layers from $item->notes instead.
+        $item = $this->cache->detail($fragrance, function () use ($fragrance) {
+            return Fragrance::where('is_active', true)
+                ->with(['notes.profile', 'accords'])
+                ->findOrFail($fragrance);
+        });
 
         $collection = $request->user()
             ? UserCollection::where('user_id', $request->user()->id)
@@ -34,6 +43,64 @@ class FragranceController extends Controller
             ? ($inWardrobe && $collection->is_favorite)
             : $this->sessionWardrobe->isFavorite($request, $item->id);
 
-        return view('app.fragrance-detail', compact('item', 'inWardrobe', 'isFavorite'));
+        $similar = $this->similarFragrances($request, $item);
+
+        return view('app.fragrance-detail', compact('item', 'inWardrobe', 'isFavorite', 'similar'));
+    }
+
+    /**
+     * The "smells like this" list for a fragrance.
+     *
+     * Reads pre-computed neighbours from the fragrance_similarities table —
+     * see Fragrance::similar(). No scoring happens here; the TF-IDF + cosine
+     * work was done offline by `fragrances:build-similarity-index`.
+     *
+     * Returns an empty collection when the index has not been built yet, so the
+     * detail page degrades gracefully instead of erroring.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function similarFragrances(Request $request, Fragrance $item): \Illuminate\Support\Collection
+    {
+        // Shared payload — identical for every visitor, so it is safe to cache.
+        // Deliberately excludes wardrobe state; see CatalogCache for the rule.
+        $neighbours = $this->cache->similar($item->id, function () use ($item) {
+            return $item->similar()
+                ->where('fragrances.is_active', true)
+                ->limit(8)
+                ->get()
+                ->map(fn (Fragrance $f) => [
+                    'id'        => $f->id,
+                    'name'      => $f->name,
+                    'brand'     => $f->brand,
+                    'gender'    => $f->gender_target,
+                    'image_url' => $f->getImageUrl(),
+                    'rating'    => $f->rating,
+                    // 0-100 for display. The raw cosine score is 0-1.
+                    'match'     => (int) round(((float) $f->pivot->score) * 100),
+                ])
+                ->values()
+                ->all();
+        });
+
+        if (empty($neighbours)) {
+            return collect();
+        }
+
+        // Per-user state is resolved fresh on every request, never cached.
+        $ids = array_column($neighbours, 'id');
+
+        $collectionIds = $request->user()
+            ? UserCollection::where('user_id', $request->user()->id)
+                ->whereIn('fragrance_id', $ids)
+                ->pluck('fragrance_id')
+                ->all()
+            : $this->sessionWardrobe->fragranceIds($request);
+
+        return collect($neighbours)->map(function (array $row) use ($collectionIds) {
+            $row['in_wardrobe'] = in_array($row['id'], $collectionIds);
+
+            return $row;
+        })->values();
     }
 }

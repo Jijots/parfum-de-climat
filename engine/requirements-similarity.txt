@@ -1,0 +1,20 @@
+# Parfum de Climat — Similarity Index Builder Dependencies
+#
+# These packages are ONLY needed to run:
+#   php artisan fragrances:build-similarity-index
+#
+# They are NOT needed for the production server (the recommendation engine
+# uses only pydantic, fastapi, uvicorn from requirements.txt).
+#
+# Install locally before building the index:
+#   pip install -r engine/requirements-similarity.txt
+#
+# Python >= 3.11 required
+
+numpy>=1.26,<3.0
+scikit-learn>=1.4,<2.0
+
+# ── Semantic note mapping (php artisan notes:map --method=embed) ─────────────
+# Pulls in torch (CPU build, several hundred MB). Needed ONLY for the offline
+# embedding pass — the production web server never imports this.
+sentence-transformers>=3.0,<6.0

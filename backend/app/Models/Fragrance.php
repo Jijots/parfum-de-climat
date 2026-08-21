@@ -169,6 +169,31 @@ class Fragrance extends Model
         return $this->belongsTo(User::class, 'added_by');
     }
 
+    /**
+     * The pre-computed "smells like this" neighbours, most similar first.
+     *
+     * These rows are produced offline by `fragrances:build-similarity-index`,
+     * which runs TF-IDF + cosine similarity over every fragrance's note list.
+     * Nothing is computed at request time — this is a plain indexed lookup.
+     *
+     * Because the index is a snapshot, it goes stale when new fragrances are
+     * imported: newcomers have no rows, and existing rows don't know about them.
+     * Re-run the command after any catalog import.
+     *
+     * @return BelongsToMany<Fragrance>
+     */
+    public function similar(): BelongsToMany
+    {
+        return $this->belongsToMany(
+                        Fragrance::class,
+                        'fragrance_similarities',
+                        'fragrance_id',
+                        'similar_fragrance_id'
+                    )
+                    ->withPivot(['score', 'rank'])
+                    ->orderBy('fragrance_similarities.rank');
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Helper Methods
     // ─────────────────────────────────────────────────────────────────────────

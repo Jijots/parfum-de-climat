@@ -1,0 +1,175 @@
+import { usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
+
+/**
+ * AppLayout — the public shell: fixed nav, theme toggle, account menu.
+ *
+ * A React port of layouts/app.blade.php. Both shells are live during the
+ * migration, so they must agree on the 'pdc_theme' localStorage key or a user's
+ * theme choice resets when they cross between a ported and an unported page.
+ */
+
+function useTheme() {
+    const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', dark);
+        try {
+            localStorage.setItem('pdc_theme', dark ? 'dark' : 'light');
+        } catch {
+            // localStorage blocked (private browsing) — the class still applies
+            // for this session, the preference just will not persist.
+        }
+    }, [dark]);
+
+    return [dark, () => setDark((d) => !d)];
+}
+
+function NavLink({ href, active, children }) {
+    return (
+        <a
+            href={href}
+            className={`transition-colors ${
+                active
+                    ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4'
+                    : 'text-[var(--muted)] hover:text-[var(--ink)]'
+            }`}
+        >
+            {children}
+        </a>
+    );
+}
+
+export default function AppLayout({ children }) {
+    const { auth, nav, currentRoute } = usePage().props;
+    const [dark, toggleTheme] = useTheme();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef(null);
+
+    // Close the account menu on any click outside it — the Alpine original used
+    // @click.outside; in React that needs an explicit document listener.
+    useEffect(() => {
+        if (!menuOpen) return;
+
+        const onClick = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', onClick);
+        return () => document.removeEventListener('mousedown', onClick);
+    }, [menuOpen]);
+
+    const isActive = (name) =>
+        name === 'browse'
+            ? currentRoute?.startsWith('browse')
+            : currentRoute === name;
+
+    return (
+        <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)] font-sans antialiased transition-colors duration-150">
+            <header
+                className="fixed inset-x-0 top-0 z-50 border-b border-[var(--hairline)]"
+                style={{
+                    backgroundColor: 'var(--surface-bg)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                }}
+            >
+                <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
+                    {/* flex-1 on both sides keeps the centre nav optically centred */}
+                    <div className="flex-1">
+                        <a
+                            href={nav.landing}
+                            className="font-display text-2xl font-light tracking-wide text-[var(--ink)] hover:text-[var(--color-accent)] transition-colors duration-150"
+                        >
+                            Parfum <span className="text-[var(--color-accent)]">de</span> Climat
+                        </a>
+                    </div>
+
+                    <div className="hidden md:flex items-center">
+                        <nav className="flex items-center gap-6 text-sm">
+                            <NavLink href={nav.app} active={isActive('app')}>Recommend</NavLink>
+                            <NavLink href={nav.browse} active={isActive('browse')}>Browse</NavLink>
+                            <NavLink href={nav.wardrobe} active={isActive('wardrobe')}>Wardrobe</NavLink>
+                            {auth.user?.verified && (
+                                <NavLink href={nav.history} active={isActive('history')}>History</NavLink>
+                            )}
+                        </nav>
+                    </div>
+
+                    <div className="flex flex-1 justify-end items-center gap-3">
+                        <button
+                            type="button"
+                            className="btn-icon"
+                            title="Toggle dark mode"
+                            onClick={toggleTheme}
+                            aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+                        >
+                            {dark ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25M18.364 5.636l-1.591 1.591M21 12h-2.25M18.364 18.364l-1.591-1.591M12 21v-2.25M5.636 18.364l1.591-1.591M3 12h2.25M5.636 5.636l1.591 1.591M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                                </svg>
+                            )}
+                        </button>
+
+                        {auth.user ? (
+                            <div className="relative" ref={menuRef}>
+                                <button onClick={() => setMenuOpen((o) => !o)} className="btn-icon" title="Account">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                    </svg>
+                                </button>
+
+                                {menuOpen && (
+                                    <div className="absolute right-0 mt-2 w-48 glass rounded-xl border border-[var(--hairline)] shadow-[0_8px_32px_rgba(0,0,0,0.08)] py-1">
+                                        <p className="px-4 py-2 text-xs text-[var(--muted)] border-b border-[var(--hairline)]">
+                                            {auth.user.name}
+                                        </p>
+                                        <a href={nav.profile} className="block px-4 py-2 text-sm text-[var(--ink)] hover:text-[var(--color-accent)] transition-colors">
+                                            Edit Profile
+                                        </a>
+                                        {!auth.user.verified && (
+                                            <a href={nav.verify} className="block px-4 py-2 text-sm text-[var(--ink)] hover:text-[var(--color-accent)] transition-colors">
+                                                Verify email
+                                            </a>
+                                        )}
+                                        {/* A real form post, not fetch: logout must rotate the
+                                            session cookie, and letting the browser follow the
+                                            redirect keeps that behaviour identical to Blade. */}
+                                        <form method="POST" action={nav.logout}>
+                                            <input
+                                                type="hidden"
+                                                name="_token"
+                                                value={document.querySelector('meta[name=csrf-token]')?.content ?? ''}
+                                            />
+                                            <button type="submit" className="w-full text-left px-4 py-2 text-sm text-[var(--ink)] hover:text-[var(--error)] transition-colors">
+                                                Sign out
+                                            </button>
+                                        </form>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                <a href={nav.login} className="text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
+                                    Sign in
+                                </a>
+                                <a href={nav.register} className="btn-primary text-sm py-1.5 px-4">
+                                    Get started
+                                </a>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </header>
+
+            {/* Offsets the fixed header so page content is not hidden beneath it */}
+            <main className="pt-16">{children}</main>
+        </div>
+    );
+}
