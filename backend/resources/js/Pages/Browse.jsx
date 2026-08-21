@@ -2,6 +2,10 @@ import { Head } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AppLayout from '../Layouts/AppLayout';
 import FragranceCard from '../Components/FragranceCard';
+import FragranceIndex from '../Components/FragranceIndex';
+import DisplayHeading from '../Components/DisplayHeading';
+import ViewToggle from '../Components/ViewToggle';
+import AnimatedNumber from '../Components/AnimatedNumber';
 import Pagination from '../Components/Pagination';
 import SearchBar from '../Components/SearchBar';
 
@@ -21,6 +25,26 @@ export default function Browse({ initialResults, filters, pagination, total, url
     const [lastPage, setLastPage] = useState(pagination.last_page);
     const [count, setCount] = useState(total);
     const [loading, setLoading] = useState(false);
+
+    // Index is the default: it is the view that distinguishes this catalogue
+    // from every other card grid, and it fits far more of 24,000 entries on
+    // screen. The grid stays one click away for recognising bottles by sight.
+    const [view, setView] = useState(() => {
+        try {
+            return localStorage.getItem('pdc_browse_view') || 'index';
+        } catch {
+            return 'index';
+        }
+    });
+
+    const changeView = (next) => {
+        setView(next);
+        try {
+            localStorage.setItem('pdc_browse_view', next);
+        } catch {
+            // localStorage blocked — the choice just will not persist.
+        }
+    };
 
     // Cancels the previous request the moment a new one starts, so a slow
     // response for "ro" can never land after the fast one for "rose".
@@ -119,43 +143,58 @@ export default function Browse({ initialResults, filters, pagination, total, url
         <AppLayout>
             <Head title="Browse Fragrances" />
 
-            <div className="mx-auto max-w-6xl px-6 py-12">
-                <div className="mb-8">
-                    <h1 className="font-display text-4xl font-light text-[var(--ink)]">Browse</h1>
-                    <p className="mt-2 text-sm text-[var(--muted)]">
-                        {count.toLocaleString()} fragrances in the catalog.
+            <div className="mx-auto max-w-5xl px-6 py-16">
+                <div className="mb-10">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--color-accent)] mb-3">
+                        The Catalogue
+                    </p>
+                    <DisplayHeading className="text-4xl sm:text-6xl" accent="Fragrance">
+                        Browse Every
+                    </DisplayHeading>
+                    <p className="mt-4 text-sm text-[var(--muted)] max-w-md">
+                        <AnimatedNumber value={count} /> entries, indexed by house and composition.
                     </p>
                 </div>
 
-                <SearchBar
-                    search={search}
-                    onSearchChange={setSearch}
-                    gender={gender}
-                    onGenderChange={setGender}
-                    loading={loading}
-                />
-
-                <div className="relative min-h-[28rem]">
-                    <div
-                        className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 transition-opacity duration-200 ${
-                            loading ? 'opacity-50' : 'opacity-100'
-                        }`}
-                    >
-                        {results.map((fragrance) => (
-                            <FragranceCard
-                                key={fragrance.id}
-                                fragrance={fragrance}
-                                detailUrl={`${urls.fragrance}/${fragrance.id}`}
-                                onToggleWardrobe={toggleWardrobe}
-                            />
-                        ))}
-
-                        {results.length === 0 && !loading && (
-                            <div className="col-span-full py-12 text-center text-[var(--muted)]">
-                                No fragrances found{search ? ` for "${search}"` : ''}.
-                            </div>
-                        )}
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-8">
+                    <div className="flex-1">
+                        <SearchBar
+                            search={search}
+                            onSearchChange={setSearch}
+                            gender={gender}
+                            onGenderChange={setGender}
+                            loading={loading}
+                        />
                     </div>
+                    <ViewToggle view={view} onChange={changeView} />
+                </div>
+
+                <div className={`relative min-h-[28rem] transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+                    {results.length === 0 && !loading ? (
+                        <div className="py-16 text-center text-[var(--muted)]">
+                            No fragrances found{search ? ` for "${search}"` : ''}.
+                        </div>
+                    ) : view === 'index' ? (
+                        <FragranceIndex
+                            results={results}
+                            // Continue the numbering across pages so an entry's
+                            // number reflects its place in the whole catalogue.
+                            startIndex={(page - 1) * 24}
+                            urls={urls}
+                            onToggleWardrobe={toggleWardrobe}
+                        />
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {results.map((fragrance) => (
+                                <FragranceCard
+                                    key={fragrance.id}
+                                    fragrance={fragrance}
+                                    detailUrl={`${urls.fragrance}/${fragrance.id}`}
+                                    onToggleWardrobe={toggleWardrobe}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <Pagination

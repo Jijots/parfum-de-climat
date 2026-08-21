@@ -42,43 +42,64 @@
 /* dark-mode adaptation is fully automatic without dark: prefix gymnastics.   */
 @layer base {
     :root {
-        /* Backgrounds */
-        --bg:           #F0ECE7;
-        --surface-bg:   rgba(255, 255, 255, 0.65);
+        /* Backgrounds — a parchment range, never pure white. Surfaces sit one
+           step deeper than the canvas so panels read as raised through TONE
+           rather than shadow. */
+        --bg:           #FEF9EF;   /* Parchment  — page canvas          */
+        --panel:        #F5EEE1;   /* Aged Paper — cards, panels        */
+        --surface-bg:   rgba(245, 238, 225, 0.72);
 
-        /* Text */
-        --ink:          #1A1A1A;
-        --muted:        #5C5855;
+        /* Text — near-black with a warm cast, so it harmonises with the
+           parchment instead of fighting it. */
+        --ink:          #2A2B2F;
+        --muted:        #515151;
 
-        /* Edges */
-        --hairline:     rgba(255, 255, 255, 0.4);
+        /* Edges — a warm taupe hairline. Replaces the old translucent-white
+           border, which only read as an edge on darker backgrounds. */
+        --hairline:     #D1C9BF;
+
+        /* Accent — terracotta, like a wax seal on an apothecary label.
+           Adaptive so dark mode can lighten it for contrast. */
+        --accent:       #B05A36;
+        --accent-dim:   rgba(176, 90, 54, 0.10);
+        --accent-edge:  rgba(176, 90, 54, 0.30);
 
         /* Feedback */
         --error:        #B94040;
 
-        /* Neumorphic shadow pair — warm-toned to complement the #F0ECE7 base */
-        --shadow-dark:  #D0C9C2;
-        --shadow-light: #FFFFFF;
+        /* Elevation pair — kept for the few surfaces still using them. */
+        --shadow-dark:  #E6DDCD;
+        --shadow-light: #FFFDF7;
     }
 
     .dark {
-        /* Backgrounds */
-        --bg:           #18161A;
-        --surface-bg:   rgba(40, 36, 44, 0.75);
+        /* The source system is light-only, so this is derived. The governing
+           rule is that dark stays WARM: a cool charcoal under a terracotta
+           accent reads as a different product, not a night mode. Every neutral
+           here keeps a brown cast. */
+        --bg:           #1C1917;
+        --panel:        #262120;
+        --surface-bg:   rgba(38, 33, 29, 0.78);
 
         /* Text */
-        --ink:          #F0ECE7;
-        --muted:        #9E99A4;
+        --ink:          #F5EEE1;   /* Aged Paper, inverted onto the dark base */
+        --muted:        #A39A8C;   /* warm grey — not the old purple-grey     */
 
-        /* Edges */
-        --hairline:     rgba(255, 255, 255, 0.08);
+        /* Edges — taupe-tinted rather than plain white at low opacity */
+        --hairline:     rgba(209, 201, 191, 0.16);
+
+        /* Accent — lifted from #B05A36, which is too dark to carry contrast
+           against a near-black background. */
+        --accent:       #C97551;
+        --accent-dim:   rgba(201, 117, 81, 0.14);
+        --accent-edge:  rgba(201, 117, 81, 0.34);
 
         /* Feedback */
         --error:        #E05858;
 
-        /* Neumorphic shadow pair — deep contrast for the near-black base */
-        --shadow-dark:  #0E0C10;
-        --shadow-light: #222028;
+        /* Elevation pair */
+        --shadow-dark:  #131110;
+        --shadow-light: #2A2422;
     }
 
     /* Global base */
@@ -109,8 +130,16 @@
 @theme {
 
     /* ── Typography ─────────────────────────────────────────────────── */
-    --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-    --font-sans:    'Inter', ui-sans-serif, system-ui, sans-serif,
+    /* Zodiak — an editorial serif with real italics, which the mixed
+       roman/italic headline depends on. Replaces Cormorant Garamond: Cormorant
+       is beautiful but very high-contrast and delicate, and at UI sizes its
+       thin strokes thin out against parchment. */
+    --font-display: 'Zodiak', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    /* Satoshi replaces Inter. Inter is the default body face of virtually
+       every AI-era product site, so it is the single strongest signal of a
+       generic build; Satoshi is warmer and slightly more characterful while
+       staying neutral enough for dense UI. */
+    --font-sans:    'Satoshi', 'Inter', ui-sans-serif, system-ui, sans-serif,
                     'Apple Color Emoji', 'Segoe UI Emoji';
 
     /* Fluid display scale — clamped for responsive layouts */
@@ -135,22 +164,38 @@
     --color-error:    var(--error);
 
     /* Static — identical in both modes */
-    --color-accent:        #C4A882;
-    --color-accent-dim:    rgba(196, 168, 130, 0.12);
-    --color-accent-border: rgba(196, 168, 130, 0.28);
+    /* Point at the adaptive vars so the accent shifts with the theme. Was a
+       fixed wheat gold (#C4A882), which is a single value and therefore could
+       not be lightened for dark mode. */
+    --color-accent:        var(--accent);
+    --color-accent-dim:    var(--accent-dim);
+    --color-accent-border: var(--accent-edge);
+    --color-panel:         var(--panel);
 
     /* ── Shadows ─────────────────────────────────────────────────────── */
     /* These reference runtime vars → dark mode adaptation is automatic   */
     --shadow-neu-raised: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
     --shadow-neu-inset:  inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
     --shadow-flat:       0 8px 32px rgba(0, 0, 0, 0.08);
-    --shadow-focus:      0 0 0 3px rgba(196, 168, 130, 0.25);
+    --shadow-focus:      0 0 0 3px var(--accent-dim);
 
     /* ── Border radius ───────────────────────────────────────────────── */
-    --radius-sm:   0.375rem;   /* 6px  — badges, chips              */
-    --radius-md:   0.5rem;     /* 8px  — inputs, buttons            */
-    --radius-lg:   0.75rem;    /* 12px — cards, panels              */
-    --radius-xl:   1rem;       /* 16px — large modals               */
+    /* Generous and soft. Cards move 12px -> 24px and interactive elements go
+       fully pill-shaped; that shape is the system's loudest signal, and it is
+       what makes the surface read as revamped rather than merely recoloured. */
+    /* Tailwind's own radius scale, overridden so the rounded-* utilities
+       already in the markup pick up the new shape language. Without this the
+       utilities keep Tailwind's defaults (rounded-2xl = 16px) and silently win
+       over the component classes below, which is why cards were still
+       rendering at 16px after the tokens changed. */
+    --radius-lg-tw: 1rem;
+    --radius-xl:    1.25rem;   /* rounded-xl  — 20px */
+    --radius-2xl:   1.5rem;    /* rounded-2xl — 24px, the card standard */
+    --radius-3xl:   2rem;      /* rounded-3xl — 32px */
+
+    --radius-sm:   9999px;     /* pill — badges, chips              */
+    --radius-md:   9999px;     /* pill — inputs, buttons            */
+    --radius-lg:   1.5rem;     /* 24px — cards, panels              */
     --radius-full: 9999px;     /* pill — badge variants             */
 
     /* ── Named spacing ───────────────────────────────────────────────── */
@@ -168,16 +213,26 @@
         backdrop-filter:          blur(20px);
         -webkit-backdrop-filter:  blur(20px);
         border:                   1px solid var(--hairline);
-        box-shadow:               0 8px 32px rgba(0, 0, 0, 0.08);
+        box-shadow:               0 12px 32px rgba(42, 43, 47, 0.06);
         border-radius:            var(--radius-lg);
     }
 
     /* ·· Neumorphic raised ················································· */
     /* Use on: stat cards. Custom implementation in .btn-primary for buttons. */
+    /* Elevation now comes from TONE plus a hairline, not from a shadow pair.
+       The class name is unchanged deliberately: every template already uses
+       .neu-raised, so redefining it here restyles the whole app without
+       touching a single piece of markup. */
     .neu-raised {
-        background-color: var(--bg);
-        box-shadow:       6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        background-color: var(--panel);
+        border:           1px solid var(--hairline);
+        box-shadow:       none;
         border-radius:    var(--radius-lg);
+        transition:       border-color 150ms ease, transform 150ms ease;
+    }
+
+    .neu-raised:hover {
+        border-color: var(--accent-edge);
     }
 
     /* ·· Neumorphic inset ················································· */

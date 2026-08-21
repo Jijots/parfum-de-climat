@@ -25,17 +25,35 @@ function useTheme() {
     return [dark, () => setDark((d) => !d)];
 }
 
+/**
+ * NavLink — the label rolls up on hover, revealing an identical copy beneath.
+ *
+ * Two stacked copies inside a fixed-height clipping box; hovering translates
+ * the pair up by exactly one line. The effect is cheap (one transform, no
+ * layout) and reads as considered rather than decorative.
+ *
+ * aria-hidden on the second copy so screen readers announce the label once.
+ */
 function NavLink({ href, active, children }) {
     return (
         <a
             href={href}
-            className={`transition-colors ${
+            className={`group relative block h-5 overflow-hidden transition-colors ${
                 active
-                    ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4'
+                    ? 'text-[var(--ink)] font-medium'
                     : 'text-[var(--muted)] hover:text-[var(--ink)]'
             }`}
         >
-            {children}
+            <span className="block transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-5">
+                <span className="block h-5 leading-5">{children}</span>
+                <span className="block h-5 leading-5" aria-hidden="true">{children}</span>
+            </span>
+
+            {/* Active underline sits outside the clipping box so it is not
+                cropped by overflow-hidden. */}
+            {active && (
+                <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-[var(--color-accent)]" />
+            )}
         </a>
     );
 }
