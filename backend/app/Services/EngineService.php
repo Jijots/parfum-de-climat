@@ -111,11 +111,11 @@ class EngineService
      * as shell commands regardless of what it contains.
      *
      * Process flow:
-     *   1. Open a Python process with stdin/stdout/stderr pipes
-     *   2. Write JSON payload to the process's stdin pipe
+     *   1. Open a Python process — stdin as a pipe, stdout/stderr as temp files
+     *   2. Write the JSON payload to the process's stdin pipe
      *   3. Close stdin to signal EOF — the engine reads until EOF
-     *   4. Read stdout (results) and stderr (errors) with stream_select timeout
-     *   5. Wait for process to exit and check the exit code
+     *   4. Poll proc_get_status() until exit, or terminate at the deadline
+     *   5. Read the output files and check the exit code
      *   6. Parse and return the JSON from stdout
      *
      * @param  array<string, mixed>  $payload
@@ -132,10 +132,27 @@ class EngineService
             );
         }
 
+        // stdout and stderr are FILES, not pipes.
+        //
+        // The pipe version deadlocked on Windows. stream_select() only supports
+        // sockets there, not pipes from proc_open, so the read loop could block
+        // past its own timeout and the deadline check never ran — the engine
+        // call simply hung. That made the recommendation flow untestable
+        // locally, which is how a field-name bug reached production unnoticed.
+        //
+        // Files remove the failure mode entirely and behave the same on every
+        // platform. The timeout is enforced below by polling proc_get_status(),
+        // which does not depend on stream_select at all.
+        //
+        // stdin stays a pipe: the engine's first action is to read it to EOF,
+        // so it drains what we write and cannot deadlock against us.
+        $stdoutFile = tempnam(sys_get_temp_dir(), 'pdc_engine_out_');
+        $stderrFile = tempnam(sys_get_temp_dir(), 'pdc_engine_err_');
+
         $descriptors = [
-            0 => ['pipe', 'r'],  // stdin  — we write the payload here
-            1 => ['pipe', 'w'],  // stdout — engine writes results here
-            2 => ['pipe', 'w'],  // stderr — engine writes errors here
+            0 => ['pipe', 'r'],                 // stdin  — we write the payload
+            1 => ['file', $stdoutFile, 'w'],    // stdout — results
+            2 => ['file', $stderrFile, 'w'],    // stderr — diagnostics
         ];
 
         // Launch the Python process. Using an array avoids shell interpretation.
@@ -147,6 +164,9 @@ class EngineService
         );
 
         if (! is_resource($process)) {
+            @unlink($stdoutFile);
+            @unlink($stderrFile);
+
             throw new \RuntimeException(
                 "Failed to spawn the Python engine process. " .
                 "Ensure '{$this->pythonBin}' is in PATH."
@@ -158,19 +178,14 @@ class EngineService
         fwrite($pipes[0], $json);
         fclose($pipes[0]); // Close stdin → signals EOF to the Python script
 
-        // ── Read stdout and stderr with timeout ───────────────────────────
-        // stream_select() monitors both pipes simultaneously so we don't
-        // block indefinitely if the process hangs.
-        [$stdout, $stderr] = $this->readPipesWithTimeout(
-            $pipes[1],
-            $pipes[2],
-            $this->timeout
-        );
+        // ── Wait for exit, with a deadline ────────────────────────────────
+        $exitCode = $this->waitForExit($process, $this->timeout, $stdoutFile, $stderrFile);
 
-        fclose($pipes[1]);
-        fclose($pipes[2]);
+        $stdout = (string) @file_get_contents($stdoutFile);
+        $stderr = (string) @file_get_contents($stderrFile);
 
-        $exitCode = proc_close($process);
+        @unlink($stdoutFile);
+        @unlink($stderrFile);
 
         // ── Handle non-zero exit ──────────────────────────────────────────
         if ($exitCode !== 0) {
@@ -190,64 +205,59 @@ class EngineService
     }
 
     /**
-     * Read from two file handles simultaneously with a timeout.
+     * Block until the engine exits, or terminate it once the deadline passes.
      *
-     * Uses stream_select() to avoid blocking if one pipe has no data.
-     * Accumulates output from both handles until they are closed by the process.
+     * Polls proc_get_status() rather than watching the output streams. The
+     * previous implementation waited on stream_select(), which does not support
+     * pipes on Windows — there the call could block indefinitely and the
+     * timeout was never actually enforced.
      *
-     * @param  resource  $stdoutPipe
-     * @param  resource  $stderrPipe
-     * @param  int       $timeoutSeconds
-     * @return array{0: string, 1: string}  [stdout_content, stderr_content]
+     * Polling has no such platform dependency: process status is always
+     * readable. The 50ms interval is short enough that a fast engine run adds
+     * no perceptible latency, and cheap enough to be irrelevant next to the
+     * Python startup cost.
      *
-     * @throws \RuntimeException  If the timeout is exceeded.
+     * @param  resource  $process
+     * @return int  The engine's exit code.
+     *
+     * @throws \RuntimeException  If the deadline is exceeded.
      */
-    private function readPipesWithTimeout($stdoutPipe, $stderrPipe, int $timeoutSeconds): array
+    private function waitForExit($process, int $timeoutSeconds, string $stdoutFile, string $stderrFile): int
     {
-        stream_set_blocking($stdoutPipe, false);
-        stream_set_blocking($stderrPipe, false);
+        $deadline = microtime(true) + $timeoutSeconds;
 
-        $stdout  = '';
-        $stderr  = '';
-        $start   = time();
+        while (true) {
+            $status = proc_get_status($process);
 
-        while (! feof($stdoutPipe) || ! feof($stderrPipe)) {
-            if ((time() - $start) > $timeoutSeconds) {
+            if (! $status['running']) {
+                // proc_close() reports -1 once the status has already been
+                // reaped, so prefer the exit code proc_get_status gave us.
+                $exitCode = $status['exitcode'];
+                proc_close($process);
+
+                return $exitCode;
+            }
+
+            if (microtime(true) >= $deadline) {
+                proc_terminate($process, 9);
+                proc_close($process);
+
+                $stderr = trim((string) @file_get_contents($stderrFile));
+                @unlink($stdoutFile);
+                @unlink($stderrFile);
+
+                Log::error('[EngineService] Python engine timed out', [
+                    'timeout_seconds' => $timeoutSeconds,
+                    'stderr'          => $stderr,
+                ]);
+
                 throw new \RuntimeException(
                     "The recommendation engine timed out after {$timeoutSeconds} seconds."
                 );
             }
 
-            $readPipes = array_filter([$stdoutPipe, $stderrPipe], fn ($p) => ! feof($p));
-
-            if (empty($readPipes)) {
-                break;
-            }
-
-            $write     = null;
-            $except    = null;
-            $changed   = stream_select($readPipes, $write, $except, 1);
-
-            if ($changed === false) {
-                break;
-            }
-
-            if (! feof($stdoutPipe)) {
-                $chunk = fread($stdoutPipe, 8192);
-                if ($chunk !== false) {
-                    $stdout .= $chunk;
-                }
-            }
-
-            if (! feof($stderrPipe)) {
-                $chunk = fread($stderrPipe, 8192);
-                if ($chunk !== false) {
-                    $stderr .= $chunk;
-                }
-            }
+            usleep(50_000); // 50ms
         }
-
-        return [$stdout, $stderr];
     }
 
     // ─────────────────────────────────────────────────────────────────────────
