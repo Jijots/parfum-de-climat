@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow plain HTTP to the local dev server's mDNS hostname.
+         In release builds only parfum.local is exempted; everything else
+         must use HTTPS. -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">parfum.local</domain>
+    </domain-config>
+</network-security-config>

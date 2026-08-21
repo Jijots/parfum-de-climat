@@ -10,15 +10,32 @@ class ApiEndpoints {
   // Base URL
   // Switch the active URL based on your current target:
   //   Flutter WEB or Windows desktop  → http://parfum.local/api/v1
+  //   iOS Simulator                   → http://parfum.local/api/v1
+  //                                     (simulator shares the Mac host's network stack,
+  //                                      so the .local mDNS name resolves correctly)
   //   Android emulator                → http://10.0.2.2/api/v1
   //                                     (10.0.2.2 is the emulator's alias for host localhost)
-  //   Physical Android device         → use your machine's LAN IP (e.g. 192.168.x.x)
-  static const String baseUrl =
-      'http://parfum.local/api/v1';
+  //   Physical Android phone (Wi-Fi)  → http://<your-machine-LAN-IP>/api/v1
+  //                                     Find the IP with `ipconfig` (Windows) or
+  //                                     `ifconfig | grep 192.168` (Mac/Linux).
+  //                                     The debug Network Security Config already
+  //                                     permits plain HTTP to any host, so no extra
+  //                                     Android config is needed.
+  //   Physical iPhone (Wi-Fi)         → http://<your-machine-LAN-IP>/api/v1
+  //                                     Add NSAllowsArbitraryLoads=true to Info.plist
+  //                                     for dev builds, or set up HTTPS on the backend.
+  // Injected at build time via --dart-define=BACKEND_URL=http://192.168.x.x
+  // Falls back to parfum.local for local simulator / web development.
+  static const String baseUrl = String.fromEnvironment(
+    'BACKEND_URL',
+    defaultValue: 'https://parfumdeclimat.app/api/v1',
+  );
 
-  /// Laravel Storage origin — used to build full image URLs from relative paths.
-  static const String storageBaseUrl =
-      'http://parfum.local/storage';
+  /// Laravel Storage origin — derived from BACKEND_URL automatically.
+  static const String storageBaseUrl = String.fromEnvironment(
+    'STORAGE_URL',
+    defaultValue: 'https://parfumdeclimat.app/storage',
+  );
 
   // Auth
   static const String register = '/auth/register';
