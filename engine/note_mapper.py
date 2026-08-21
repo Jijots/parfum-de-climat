@@ -75,6 +75,16 @@ SYNONYMS: dict[str, str] = {
     "encens":          "frankincense",
     "benzoin siam":    "benzoin",
     "styrax":          "benzoin",
+    "cashmeran":       "cashmere wood",   # Cashmeran is the trade name for it
+    "cashmere woods":  "cashmere wood",
+    "musk mallow":     "ambrette",        # ambrette IS musk mallow seed
+    "ambrette seed":   "ambrette",
+    "orange flower":   "neroli",          # same flower as orange blossom
+    "juniper berry":   "juniper",
+    "aldehyde":        "aldehydes",
+    "lychee":          "litchi",
+    "water melon":     "melon",
+    "nectarine":       "peach",           # closest stone-fruit profile
 }
 
 # Geographic and quality qualifiers that narrow a material without changing it.
@@ -93,6 +103,7 @@ QUALIFIERS: set[str] = {
     "sambac", "grandiflorum", "absolute", "essence", "extract", "oil",
     "wild", "fresh", "dried", "smoked", "toasted", "candied", "sweet",
     "bitter", "sour", "clary", "true", "common", "garden",
+    "green", "african", "sri lankan", "ceylon", "persian", "greek",
 }
 
 # Trailing words that add no material meaning: "Woody Notes" becomes "woody".
