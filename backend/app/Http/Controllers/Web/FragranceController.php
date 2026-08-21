@@ -8,6 +8,8 @@ use App\Models\UserCollection;
 use App\Services\CatalogCache;
 use App\Services\SessionWardrobeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class FragranceController extends Controller
 {
@@ -45,7 +47,48 @@ class FragranceController extends Controller
 
         $similar = $this->similarFragrances($request, $item);
 
-        return view('app.fragrance-detail', compact('item', 'inWardrobe', 'isFavorite', 'similar'));
+        // Notes are grouped here rather than in the view. The three layers are
+        // filtered subsets of one relation, so grouping the loaded collection
+        // avoids the extra queries the topNotes/heartNotes/baseNotes relations
+        // would trigger — which would also bypass the cached $item entirely.
+        $byLayer = $item->notes->groupBy('layer');
+
+        return Inertia::render('FragranceDetail', [
+            'item' => [
+                'id'                  => $item->id,
+                'name'                => $item->name,
+                'brand'               => $item->brand,
+                'gender_target'       => $item->gender_target,
+                'release_year'        => $item->release_year,
+                'concentration'       => $item->concentration,
+                'description'         => $item->description ? Str::limit($item->description, 300) : null,
+                'rating'              => $item->rating,
+                'sillage'             => $item->sillage,
+                'longevity'           => $item->longevity,
+                'image_url'           => $item->getImageUrl(),
+                'external_source_url' => $item->external_source_url,
+                'notes' => [
+                    'top'   => $byLayer->get('top',   collect())->pluck('raw_note_name')->values(),
+                    'heart' => $byLayer->get('heart', collect())->pluck('raw_note_name')->values(),
+                    'base'  => $byLayer->get('base',  collect())->pluck('raw_note_name')->values(),
+                ],
+                'accords' => $item->accords->sortByDesc('strength')->take(8)
+                    ->map(fn ($a) => ['accord' => $a->accord, 'strength' => (float) $a->strength])
+                    ->values(),
+            ],
+            'similar'  => $similar,
+            'wardrobe' => [
+                'in_wardrobe' => $inWardrobe,
+                'is_favorite' => $isFavorite,
+            ],
+            'urls' => [
+                'browse'    => route('browse'),
+                'fragrance' => url('/fragrances'),
+                'toggle'    => route('wardrobe.toggle', $item->id),
+                'favorite'  => route('wardrobe.favorite', $item->id),
+            ],
+            'csrf' => csrf_token(),
+        ]);
     }
 
     /**

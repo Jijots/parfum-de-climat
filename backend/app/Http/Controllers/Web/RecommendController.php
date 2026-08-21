@@ -11,6 +11,7 @@ use App\Services\SessionWardrobeService;
 use App\Services\WeatherService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class RecommendController extends Controller
 {
@@ -20,9 +21,20 @@ class RecommendController extends Controller
         private readonly SessionWardrobeService $sessionWardrobe,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        return view('app.recommend');
+        return Inertia::render('Recommend', [
+            'isGuest' => ! $request->user(),
+            'urls' => [
+                'recommend' => route('app.recommend'),
+                'choose'    => url('/app/recommend'),
+                'browse'    => route('browse'),
+                'fragrance' => url('/fragrances'),
+                'login'     => route('login'),
+                'register'  => route('register'),
+            ],
+            'csrf' => csrf_token(),
+        ]);
     }
 
     public function recommend(Request $request): JsonResponse
