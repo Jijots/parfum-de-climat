@@ -4,7 +4,11 @@ nixPkgs = ["php83", "php83Extensions.pdo_pgsql", "php83Extensions.pgsql",
            "php83Extensions.xml", "php83Extensions.ctype", "php83Extensions.curl",
            "php83Extensions.fileinfo", "php83Extensions.bcmath",
            "php83Extensions.zip", "php83Extensions.gd", "php83Extensions.intl",
-           "composer", "nodejs_20", "python311", "python311Packages.pip"]
+           "composer", "nodejs_22", "python311", "python311Packages.pip"]
+# nodejs_22, not nodejs_20: Vite 7 requires node ^20.19.0 || >=22.12.0, and the
+# nodejs_20 nix package is not guaranteed to sit above 20.19. A build against an
+# older 20.x fails at `npm run build`, which would ship a deploy with no
+# compiled assets.
 
 [phases.install]
 cmds = [
