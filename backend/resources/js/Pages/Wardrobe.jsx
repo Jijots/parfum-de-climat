@@ -2,6 +2,11 @@ import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '../Layouts/AppLayout';
 import FragranceCard from '../Components/FragranceCard';
+import FragranceIndex from '../Components/FragranceIndex';
+import PageHeader from '../Components/PageHeader';
+import ViewToggle from '../Components/ViewToggle';
+import Rule from '../Components/Rule';
+import AnimatedNumber from '../Components/AnimatedNumber';
 
 /**
  * Wardrobe — the fragrances a visitor owns.
@@ -14,6 +19,27 @@ import FragranceCard from '../Components/FragranceCard';
 export default function Wardrobe({ favorites, collection, pagination, isGuest, urls, csrf }) {
     const [items, setItems] = useState(collection);
     const [favs, setFavs] = useState(favorites);
+
+    // Shares the key Browse writes, so a visitor who picks a view on one page
+    // gets it on the other. Two catalogues that disagree about how to present
+    // the same objects is exactly the kind of drift the shared components exist
+    // to prevent. Defaults to tiles, matching Browse.
+    const [view, setView] = useState(() => {
+        try {
+            return localStorage.getItem('pdc_browse_view') || 'grid';
+        } catch {
+            return 'grid';
+        }
+    });
+
+    const changeView = (next) => {
+        setView(next);
+        try {
+            localStorage.setItem('pdc_browse_view', next);
+        } catch {
+            // localStorage blocked — the choice just will not persist.
+        }
+    };
 
     const removeFromWardrobe = async (id) => {
         const res = await fetch(`${urls.wardrobe}/${id}/toggle`, {
@@ -41,22 +67,29 @@ export default function Wardrobe({ favorites, collection, pagination, isGuest, u
         <AppLayout>
             <Head title="My Wardrobe" />
 
-            <div className="mx-auto max-w-6xl px-6 py-12">
+            <div className="mx-auto max-w-5xl px-6 py-16">
                 {isGuest && (
-                    <div className="mb-6 glass rounded-2xl p-4 text-sm text-[var(--muted)]">
-                        This is your temporary wardrobe for this browser session. It will be merged
-                        into your account if you sign in or register before the session ends.
+                    <div className="mb-8 flex items-start gap-3 border-l-2 border-[var(--color-accent)] pl-4 py-1">
+                        <p className="text-sm text-[var(--muted)]">
+                            A temporary wardrobe for this browser session. It merges into your
+                            account if you sign in or register before the session ends.
+                        </p>
                     </div>
                 )}
 
-                <div className="mb-8 flex items-center justify-between">
-                    <div>
-                        <h1 className="font-display text-4xl font-light text-[var(--ink)]">My Wardrobe</h1>
-                        <p className="mt-2 text-sm text-[var(--muted)]">
-                            {pagination.total} {pagination.total === 1 ? 'fragrance' : 'fragrances'} in your collection.
-                        </p>
-                    </div>
-                </div>
+                <PageHeader
+                    eyebrow="Your Collection"
+                    accent="Wardrobe"
+                    subline={
+                        <>
+                            <AnimatedNumber value={pagination.total} />{' '}
+                            {pagination.total === 1 ? 'fragrance' : 'fragrances'} on the shelf.
+                        </>
+                    }
+                    actions={items.length > 0 ? <ViewToggle view={view} onChange={changeView} /> : null}
+                >
+                    The
+                </PageHeader>
 
                 {items.length === 0 ? (
                     <div className="neu-raised rounded-2xl p-12 text-center">
@@ -72,9 +105,7 @@ export default function Wardrobe({ favorites, collection, pagination, isGuest, u
                     <>
                         {favs.length > 0 && (
                             <div className="mb-10">
-                                <p className="text-xs text-[var(--muted)] uppercase tracking-widest mb-3">
-                                    Favourites
-                                </p>
+                                <Rule label="Favourites" />
                                 <div className="flex gap-4 overflow-x-auto pb-2">
                                     {favs.map((f) => (
                                         <a
@@ -104,16 +135,27 @@ export default function Wardrobe({ favorites, collection, pagination, isGuest, u
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {items.map((f) => (
-                                <FragranceCard
-                                    key={f.id}
-                                    fragrance={{ ...f, in_wardrobe: true }}
-                                    detailUrl={`${urls.fragrance}/${f.id}`}
-                                    onToggleWardrobe={removeFromWardrobe}
-                                />
-                            ))}
-                        </div>
+                        <Rule label="Collection" />
+
+                        {view === 'index' ? (
+                            <FragranceIndex
+                                results={items.map((f) => ({ ...f, in_wardrobe: true }))}
+                                startIndex={(pagination.current_page - 1) * 16}
+                                urls={urls}
+                                onToggleWardrobe={removeFromWardrobe}
+                            />
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {items.map((f) => (
+                                    <FragranceCard
+                                        key={f.id}
+                                        fragrance={{ ...f, in_wardrobe: true }}
+                                        detailUrl={`${urls.fragrance}/${f.id}`}
+                                        onToggleWardrobe={removeFromWardrobe}
+                                    />
+                                ))}
+                            </div>
+                        )}
 
                         {pagination.last_page > 1 && (
                             <div className="mt-8 flex items-center justify-center gap-2">

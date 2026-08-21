@@ -2,6 +2,9 @@ import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '../Layouts/AppLayout';
 import RecommendationCard from '../Components/RecommendationCard';
+import PageHeader from '../Components/PageHeader';
+import Rule from '../Components/Rule';
+import { motion } from 'motion/react';
 
 const SEASON_EMOJI = { spring: '🌸', summer: '☀️', autumn: '🍂', winter: '❄️' };
 
@@ -121,17 +124,20 @@ export default function Recommend({ urls, csrf, isGuest: initialIsGuest }) {
         <AppLayout>
             <Head title="Today's Recommendation" />
 
-            <div className="mx-auto max-w-4xl px-6 py-12">
-                <h1 className="font-display text-[var(--ink)] text-[2.5rem] font-light">
-                    Today&apos;s Recommendation
-                </h1>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                    We read your local weather and score it against your wardrobe.
-                </p>
+            <div className="mx-auto max-w-4xl px-6 py-16">
+                <PageHeader
+                    eyebrow="Today's Reading"
+                    accent="Weather"
+                    subline="Your local conditions, scored against everything on your shelf."
+                >
+                    Wear The
+                </PageHeader>
 
                 {isGuest && (
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
-                        <span>Sign in to keep your history and wardrobe.</span>
+                    <div className="mb-8 flex flex-wrap items-center gap-3 border-l-2 border-[var(--color-accent)] pl-4 py-1">
+                        <span className="text-sm text-[var(--muted)]">
+                            Sign in to keep your readings and wardrobe.
+                        </span>
                         <a href={urls.register} className="btn-primary text-xs px-3.5 py-1.5">Create account</a>
                         <a href={urls.login} className="btn-ghost text-xs px-3.5 py-1.5">Sign in</a>
                     </div>
@@ -185,24 +191,37 @@ export default function Recommend({ urls, csrf, isGuest: initialIsGuest }) {
                 {status === 'done' && (
                     <>
                         {weather && (
-                            <div className="glass rounded-2xl p-6 mb-8 flex flex-wrap items-center gap-6">
-                                <div>
-                                    <p className="text-xs text-[var(--muted)] uppercase tracking-widest">
-                                        {weather.location}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                className="mb-12 border-y border-[var(--hairline)] py-8"
+                            >
+                                {/* Set as a masthead rather than a card: the temperature is
+                                    the largest thing on the page because it is the input the
+                                    whole ranking below derives from. */}
+                                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--color-accent)]">
+                                    {weather.location}
+                                </p>
+
+                                <div className="mt-3 flex items-end gap-8 flex-wrap">
+                                    <p className="font-display text-7xl sm:text-8xl font-light leading-[0.85] text-[var(--ink)]">
+                                        {Math.round(weather.temperature_celsius)}
+                                        <span className="text-3xl align-super">°</span>
                                     </p>
-                                    <p className="font-display text-4xl font-light text-[var(--ink)] mt-1">
-                                        {Math.round(weather.temperature_celsius)}°C
-                                    </p>
+
+                                    <dl className="grid grid-cols-2 gap-x-10 gap-y-2 pb-2 font-mono text-[11px] uppercase tracking-[0.12em]">
+                                        <dt className="text-[var(--muted)]">Sky</dt>
+                                        <dd className="text-[var(--ink)]">{weather.condition}</dd>
+                                        <dt className="text-[var(--muted)]">Humidity</dt>
+                                        <dd className="text-[var(--ink)]">{weather.humidity_percent}%</dd>
+                                        <dt className="text-[var(--muted)]">Season</dt>
+                                        <dd className="text-[var(--ink)] capitalize">
+                                            {SEASON_EMOJI[(weather.season || '').toLowerCase()] ?? ''} {weather.season}
+                                        </dd>
+                                    </dl>
                                 </div>
-                                <div className="text-sm text-[var(--muted)] space-y-1">
-                                    <p>{weather.condition}</p>
-                                    <p>Humidity {weather.humidity_percent}%</p>
-                                    <p>
-                                        {SEASON_EMOJI[(weather.season || '').toLowerCase()] ?? '🌡️'}{' '}
-                                        <span className="capitalize">{weather.season}</span>
-                                    </p>
-                                </div>
-                            </div>
+                            </motion.div>
                         )}
 
                         {recommendations.length === 0 ? (
@@ -216,6 +235,8 @@ export default function Recommend({ urls, csrf, isGuest: initialIsGuest }) {
                                 <a href={urls.browse} className="btn-primary inline-flex">Browse Fragrances</a>
                             </div>
                         ) : (
+                            <>
+                            <Rule label="From your wardrobe">ranked by fit</Rule>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {recommendations.map((rec) => (
                                     <RecommendationCard
@@ -228,16 +249,12 @@ export default function Recommend({ urls, csrf, isGuest: initialIsGuest }) {
                                     />
                                 ))}
                             </div>
+                            </>
                         )}
 
                         {pickUps.length > 0 && (
-                            <div className="mt-10">
-                                <h2 className="font-display text-xl font-light text-[var(--ink)] mb-1">
-                                    Recommended Pick-Ups
-                                </h2>
-                                <p className="text-xs text-[var(--muted)] mb-4">
-                                    Not in your wardrobe, but they suit today.
-                                </p>
+                            <div className="mt-14">
+                                <Rule label="Pick-ups">not yours yet</Rule>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     {pickUps.map((rec) => (
                                         <RecommendationCard

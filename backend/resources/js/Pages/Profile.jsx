@@ -1,5 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '../Layouts/AppLayout';
+import PageHeader from '../Components/PageHeader';
+import Rule from '../Components/Rule';
 
 const GENDERS = [
     ['', 'Prefer not to say'],
@@ -9,15 +11,19 @@ const GENDERS = [
 ];
 
 /**
- * Profile — account settings.
+ * Profile — account settings, set as a record rather than a form card.
  *
- * Uses Inertia's useForm rather than a hand-rolled fetch: it tracks dirty
- * state, wires server-side validation errors back onto the right fields, and
- * exposes `processing` so the submit button can disable itself. That is the
- * whole reason to use Inertia for a form page instead of an XHR endpoint.
+ * Fields sit in labelled rows separated by hairlines, matching the index and
+ * detail pages. A bordered form panel is the shape every settings page defaults
+ * to, and it would be the one screen still reading as a dashboard.
+ *
+ * Uses Inertia's useForm: it tracks dirty state, maps server-side validation
+ * errors back onto the right fields, and exposes `processing` for the submit
+ * button. That is the whole reason to render a form through Inertia rather than
+ * post it over XHR.
  */
 export default function Profile({ user, urls, timezones }) {
-    const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
+    const { data, setData, patch, processing, errors, isDirty, recentlySuccessful } = useForm({
         name: user.name ?? '',
         gender: user.gender ?? '',
         timezone: user.timezone ?? 'UTC',
@@ -32,33 +38,41 @@ export default function Profile({ user, urls, timezones }) {
         <AppLayout>
             <Head title="Profile" />
 
-            <div className="mx-auto max-w-xl px-6 py-12">
-                <h1 className="font-display text-4xl font-light text-[var(--ink)]">Profile</h1>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                    Your timezone decides which season the engine scores against.
-                </p>
+            <div className="mx-auto max-w-2xl px-6 py-16">
+                <PageHeader
+                    eyebrow="Your Account"
+                    accent="Details"
+                    subline="Your timezone decides which season the engine scores against."
+                >
+                    The
+                </PageHeader>
 
-                <form onSubmit={submit} className="neu-raised rounded-2xl p-6 mt-8 space-y-5">
-                    <Field label="Email">
+                <form onSubmit={submit}>
+                    <Rule label="Identity" />
+
+                    <Row label="Email" hint="Cannot be changed here.">
                         <input
                             type="email"
                             value={user.email}
                             disabled
                             className="input-field w-full opacity-60 cursor-not-allowed"
                         />
-                        <p className="mt-1 text-xs text-[var(--muted)]">Email cannot be changed here.</p>
-                    </Field>
+                    </Row>
 
-                    <Field label="Name" error={errors.name}>
+                    <Row label="Name" error={errors.name}>
                         <input
                             type="text"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             className="input-field w-full"
                         />
-                    </Field>
+                    </Row>
 
-                    <Field label="Fragrance preference" error={errors.gender}>
+                    <div className="mt-12">
+                        <Rule label="Preferences" />
+                    </div>
+
+                    <Row label="Fragrance" error={errors.gender} hint="Filters what gets recommended.">
                         <select
                             value={data.gender}
                             onChange={(e) => setData('gender', e.target.value)}
@@ -68,9 +82,9 @@ export default function Profile({ user, urls, timezones }) {
                                 <option key={value} value={value}>{label}</option>
                             ))}
                         </select>
-                    </Field>
+                    </Row>
 
-                    <Field label="Timezone" error={errors.timezone}>
+                    <Row label="Timezone" error={errors.timezone} hint="Sets your hemisphere, and so your season.">
                         <select
                             value={data.timezone}
                             onChange={(e) => setData('timezone', e.target.value)}
@@ -80,14 +94,26 @@ export default function Profile({ user, urls, timezones }) {
                                 <option key={tz} value={tz}>{tz}</option>
                             ))}
                         </select>
-                    </Field>
+                    </Row>
 
-                    <div className="flex items-center gap-3 pt-2">
-                        <button type="submit" disabled={processing} className="btn-primary text-sm disabled:opacity-50">
+                    <div className="mt-10 flex items-center gap-4">
+                        <button
+                            type="submit"
+                            disabled={processing || !isDirty}
+                            className="btn-primary text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
                             {processing ? 'Saving…' : 'Save changes'}
                         </button>
+
                         {recentlySuccessful && (
-                            <span className="text-sm text-[var(--color-accent)]">Saved.</span>
+                            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--color-accent)]">
+                                Saved
+                            </span>
+                        )}
+                        {isDirty && !processing && !recentlySuccessful && (
+                            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--muted)]">
+                                Unsaved changes
+                            </span>
                         )}
                     </div>
                 </form>
@@ -96,12 +122,24 @@ export default function Profile({ user, urls, timezones }) {
     );
 }
 
-function Field({ label, error, children }) {
+/**
+ * One labelled setting. Label sits in a fixed left column on wide screens and
+ * stacks above the control on narrow ones.
+ */
+function Row({ label, hint, error, children }) {
     return (
-        <div>
-            <label className="block text-xs text-[var(--muted)] uppercase tracking-widest mb-2">{label}</label>
-            {children}
-            {error && <p className="mt-1 text-xs text-[var(--error)]">{error}</p>}
+        <div className="grid grid-cols-1 sm:grid-cols-[8rem_1fr] gap-2 sm:gap-6 py-5 border-b border-[var(--hairline)]">
+            <div className="pt-2.5">
+                <label className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--ink)]">
+                    {label}
+                </label>
+            </div>
+
+            <div className="min-w-0">
+                {children}
+                {hint && !error && <p className="mt-1.5 text-xs text-[var(--muted)]">{hint}</p>}
+                {error && <p className="mt-1.5 text-xs text-[var(--error)]">{error}</p>}
+            </div>
         </div>
     );
 }

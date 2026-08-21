@@ -22,6 +22,7 @@ class HistoryController extends Controller
                 'location_name'       => $log->location_name,
                 'temperature_celsius' => $log->temperature_celsius,
                 'weather_condition'   => $log->weather_condition,
+                'season'              => $log->season,
                 'created_at'          => $log->created_at->format('j M Y, H:i'),
                 'chosen_name'         => $log->chosenFragrance?->name,
                 // Decoded here so the page never has to parse JSON. Only the

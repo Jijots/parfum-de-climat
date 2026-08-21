@@ -6,9 +6,11 @@
  * in localStorage so it survives navigation.
  */
 export default function ViewToggle({ view, onChange }) {
+    // Grid first: it is the default, and a toggle whose default sits second
+    // reads as though the other option is primary.
     const options = [
-        ['index', 'Index', 'M4 6h16M4 12h16M4 18h16'],
-        ['grid', 'Grid', 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'],
+        ['grid', 'Tiles', 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'],
+        ['index', 'List', 'M4 6h16M4 12h16M4 18h16'],
     ];
 
     return (

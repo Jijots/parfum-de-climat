@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import AppLayout from '../Layouts/AppLayout';
 import FragranceCard from '../Components/FragranceCard';
 import FragranceIndex from '../Components/FragranceIndex';
-import DisplayHeading from '../Components/DisplayHeading';
+import PageHeader from '../Components/PageHeader';
 import ViewToggle from '../Components/ViewToggle';
 import AnimatedNumber from '../Components/AnimatedNumber';
 import Pagination from '../Components/Pagination';
@@ -26,14 +26,15 @@ export default function Browse({ initialResults, filters, pagination, total, url
     const [count, setCount] = useState(total);
     const [loading, setLoading] = useState(false);
 
-    // Index is the default: it is the view that distinguishes this catalogue
-    // from every other card grid, and it fits far more of 24,000 entries on
-    // screen. The grid stays one click away for recognising bottles by sight.
+    // Tiles are the default. People recognise fragrances by the bottle before
+    // they read the name, so the image is the most useful thing a catalogue row
+    // can lead with. The index view remains available from the toggle for
+    // scanning names and houses quickly.
     const [view, setView] = useState(() => {
         try {
-            return localStorage.getItem('pdc_browse_view') || 'index';
+            return localStorage.getItem('pdc_browse_view') || 'grid';
         } catch {
-            return 'index';
+            return 'grid';
         }
     });
 
@@ -144,29 +145,23 @@ export default function Browse({ initialResults, filters, pagination, total, url
             <Head title="Browse Fragrances" />
 
             <div className="mx-auto max-w-5xl px-6 py-16">
-                <div className="mb-10">
-                    <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--color-accent)] mb-3">
-                        The Catalogue
-                    </p>
-                    <DisplayHeading className="text-4xl sm:text-6xl" accent="Fragrance">
-                        Browse Every
-                    </DisplayHeading>
-                    <p className="mt-4 text-sm text-[var(--muted)] max-w-md">
-                        <AnimatedNumber value={count} /> entries, indexed by house and composition.
-                    </p>
-                </div>
+                <PageHeader
+                    eyebrow="The Catalogue"
+                    accent="Fragrance"
+                    subline={<><AnimatedNumber value={count} /> entries, indexed by house and composition.</>}
+                    actions={<ViewToggle view={view} onChange={changeView} />}
+                >
+                    Browse Every
+                </PageHeader>
 
-                <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-8">
-                    <div className="flex-1">
-                        <SearchBar
-                            search={search}
-                            onSearchChange={setSearch}
-                            gender={gender}
-                            onGenderChange={setGender}
-                            loading={loading}
-                        />
-                    </div>
-                    <ViewToggle view={view} onChange={changeView} />
+                <div className="mb-8">
+                    <SearchBar
+                        search={search}
+                        onSearchChange={setSearch}
+                        gender={gender}
+                        onGenderChange={setGender}
+                        loading={loading}
+                    />
                 </div>
 
                 <div className={`relative min-h-[28rem] transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
