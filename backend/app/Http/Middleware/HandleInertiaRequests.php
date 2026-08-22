@@ -75,6 +75,9 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error'   => fn () => $request->session()->get('error'),
+                // Laravel's password broker and the email-verification routes
+                // both report through 'status'.
+                'status'  => fn () => $request->session()->get('status'),
             ],
         ];
     }

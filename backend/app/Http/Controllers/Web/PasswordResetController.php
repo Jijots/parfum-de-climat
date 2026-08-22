@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -14,7 +15,12 @@ class PasswordResetController extends Controller
 {
     public function showForgotForm()
     {
-        return view('auth.forgot-password');
+        return Inertia::render('Auth/ForgotPassword', [
+            'urls' => [
+                'submit' => route('password.email'),
+                'login'  => route('login'),
+            ],
+        ]);
     }
 
     public function sendResetLink(Request $request)
@@ -29,9 +35,13 @@ class PasswordResetController extends Controller
 
     public function showResetForm(Request $request, string $token)
     {
-        return view('auth.reset-password', [
+        return Inertia::render('Auth/ResetPassword', [
             'token' => $token,
-            'email' => $request->query('email', ''),
+            'email' => $request->email,
+            'urls'  => [
+                'submit' => route('password.update'),
+                'login'  => route('login'),
+            ],
         ]);
     }
 

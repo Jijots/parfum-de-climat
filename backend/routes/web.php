@@ -27,6 +27,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Web;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 
 /* ── Public ──────────────────────────────────────────────────────────────── */
@@ -76,8 +77,13 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/email/verify', fn () => view('auth.verify-email'))
-        ->name('verification.notice');
+    Route::get('/email/verify', fn (Request $request) => Inertia::render('Auth/VerifyEmail', [
+        'email' => $request->user()?->email,
+        'urls'  => [
+            'resend' => route('verification.send'),
+            'logout' => route('logout'),
+        ],
+    ]))->name('verification.notice');
 
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         $request->fulfill();

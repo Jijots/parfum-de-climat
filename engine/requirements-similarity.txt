@@ -1,20 +1,46 @@
-# Parfum de Climat — Similarity Index Builder Dependencies
+# Parfum de Climat — offline ML tooling
 #
-# These packages are ONLY needed to run:
-#   php artisan fragrances:build-similarity-index
+# ─────────────────────────────────────────────────────────────────────────────
+#  NOT NEEDED TO RUN THE APP. Do not install these on a web server.
+# ─────────────────────────────────────────────────────────────────────────────
 #
-# They are NOT needed for the production server (the recommendation engine
-# uses only pydantic, fastapi, uvicorn from requirements.txt).
+# The production server installs engine/requirements.txt only (pydantic,
+# fastapi, uvicorn). Nothing in the request path imports anything below —
+# these back two Artisan commands that are run by hand, occasionally, on a
+# developer machine:
 #
-# Install locally before building the index:
-#   pip install -r engine/requirements-similarity.txt
+#   php artisan fragrances:build-similarity-index    numpy + scikit-learn
+#   php artisan notes:map --method=embed             sentence-transformers
 #
-# Python >= 3.11 required
+# ── Disk cost, so it is not a surprise ───────────────────────────────────────
+#
+#   numpy + scikit-learn        ~120 MB
+#   sentence-transformers       ~25 MB
+#     └─ torch (CPU build)      ~1.5-2 GB   <-- the bulk of it
+#   all-MiniLM-L6-v2 model      ~87 MB, downloaded on first run to
+#                               ~/.cache/huggingface, then available offline
+#
+# Roughly 2 GB in total, almost all of it torch. There is no lighter build of
+# sentence-transformers that avoids it.
+#
+# ── Installing only what you need ────────────────────────────────────────────
+#
+# The similarity index is the common case and does NOT need torch. To build it
+# without the 2 GB download, install just the top block:
+#
+#   pip install "numpy>=1.26,<3.0" "scikit-learn>=1.4,<2.0"
+#
+# Add sentence-transformers only if you are running the semantic note-mapping
+# pass. It contributed 2,755 of the ~50,000 note rows recovered so far —
+# genuinely useful, but the string matcher in note_mapper.py did the other 88%
+# with no dependencies at all, so start there.
+#
+# Python >= 3.11 required.
 
+# ── Similarity index (php artisan fragrances:build-similarity-index) ─────────
 numpy>=1.26,<3.0
 scikit-learn>=1.4,<2.0
 
 # ── Semantic note mapping (php artisan notes:map --method=embed) ─────────────
-# Pulls in torch (CPU build, several hundred MB). Needed ONLY for the offline
-# embedding pass — the production web server never imports this.
+# Pulls torch. See the disk-cost note above before installing.
 sentence-transformers>=3.0,<6.0

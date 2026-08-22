@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\SessionWardrobeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -19,7 +20,13 @@ class AuthController extends Controller
 
     public function showLogin()
     {
-        return view('auth.user-login');
+        return Inertia::render('Auth/Login', [
+            'urls' => [
+                'submit'   => route('login.store'),
+                'register' => route('register'),
+                'forgot'   => route('password.request'),
+            ],
+        ]);
     }
 
     public function login(Request $request): RedirectResponse
@@ -48,7 +55,15 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        return view('auth.register');
+        return Inertia::render('Auth/Register', [
+            'urls' => [
+                'submit' => route('register.store'),
+                'login'  => route('login'),
+            ],
+            // Shipped as a list so the select has real options — a few KB, and
+            // it avoids a second round-trip just to fill a dropdown.
+            'timezones' => \DateTimeZone::listIdentifiers(),
+        ]);
     }
 
     public function register(Request $request): RedirectResponse
