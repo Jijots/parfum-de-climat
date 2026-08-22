@@ -1,0 +1,51 @@
+name: Keep Render warm
+
+# Render's free tier suspends a service after 15 minutes without traffic, and
+# the next visitor pays a full container boot — tens of seconds. Pinging the
+# health endpoint on a schedule keeps the instance resident so that never
+# happens.
+#
+# ── On the free-tier hours ───────────────────────────────────────────────────
+# Render's free plan allows 750 instance-hours per month. A service kept awake
+# continuously uses about 730 (24 x 30.4), so this fits with roughly 20 hours to
+# spare — but those hours are pooled ACROSS THE ACCOUNT. If you add a second
+# free service this will push you over, and the fix is to narrow the schedule
+# below to the hours you actually use the app.
+#
+# ── On the schedule ──────────────────────────────────────────────────────────
+# GitHub's scheduled runs are best-effort and get delayed when the platform is
+# busy, sometimes by 10+ minutes. */10 is therefore aiming at a 15-minute
+# window rather than comfortably inside it, and an occasional cold start will
+# still slip through. If that becomes annoying, an external monitor such as
+# UptimeRobot polls far more punctually on its free tier.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:        # lets you trigger a wake-up by hand
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping health endpoint
+        run: |
+          # /up is Laravel's built-in health route (registered in
+          # bootstrap/app.php). It touches no database, so a ping costs the
+          # instance almost nothing beyond staying resident.
+          #
+          # --max-time 90 because a ping that ARRIVES during a cold boot has to
+          # wait for that boot to finish; failing at the default timeout would
+          # report a false outage.
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 \
+                   https://parfumdeclimat.app/up)
+
+          echo "health check returned HTTP $code"
+
+          # 2xx and 3xx both mean the instance is up and serving.
+          if [ "$code" -lt 200 ] || [ "$code" -ge 400 ]; then
+            echo "::warning::Health check returned $code"
+            exit 1
+          fi

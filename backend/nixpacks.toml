@@ -21,4 +21,13 @@ cmds = [
 cmds = ["npm run build"]
 
 [start]
-cmd = "php artisan migrate --force && php artisan storage:link && php artisan serve --host=0.0.0.0 --port=$PORT"
+# Caches are built at START, not during the build phase. config:cache bakes the
+# environment into a single file, and at build time Render has not necessarily
+# exposed the same variables the running service sees — a wrong cached config
+# is a silent production bug, whereas the ~1s this adds to boot is paid rarely
+# once the service is kept warm.
+#
+# Measured locally, the three caches take a request from ~270ms to ~240ms. That
+# is per-request, not just at boot: without them Laravel re-parses every config
+# file and recompiles the route table on every single hit.
+cmd = "php artisan migrate --force && php artisan storage:link && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=$PORT"
