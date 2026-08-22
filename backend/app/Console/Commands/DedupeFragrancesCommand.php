@@ -48,7 +48,8 @@ class DedupeFragrancesCommand extends Command
 {
     protected $signature = 'fragrances:dedupe
                             {--apply      : Write the changes. Without this the command only reports.}
-                            {--fix-names  : Also correct names against their source URL and normalise brand casing}';
+                            {--fix-names  : Also correct names against their source URL and normalise brand casing}
+                            {--deslug-brands : Rewrite hyphenated brand slugs as readable names}';
 
     protected $description = 'Retire duplicate fragrances and clean up import naming artefacts';
 
@@ -56,6 +57,7 @@ class DedupeFragrancesCommand extends Command
     {
         $apply    = (bool) $this->option('apply');
         $fixNames = (bool) $this->option('fix-names');
+        $deslug   = (bool) $this->option('deslug-brands');
 
         $this->info('');
         $this->info('╔══════════════════════════════════════════════════════════╗');
@@ -119,10 +121,10 @@ class DedupeFragrancesCommand extends Command
         if (empty($retire)) {
             $this->info('  No duplicates found.');
 
-            // Deliberately NOT returning here. --fix-names is independent of
-            // deduplication, and an early return made it unusable once the
-            // duplicates were already cleared.
-            if (! $fixNames) {
+            // Deliberately NOT returning here. The cleanup flags are
+            // independent of deduplication, and an early return made them
+            // unusable once the duplicates were already cleared.
+            if (! $fixNames && ! $deslug) {
                 return Command::SUCCESS;
             }
         } else {
@@ -145,6 +147,19 @@ class DedupeFragrancesCommand extends Command
         // ── Naming artefacts ──────────────────────────────────────────────────
         $nameFixes  = $fixNames ? $this->planNameFixes($rows) : [];
         $brandFixes = $fixNames ? $this->planBrandFixes($rows) : [];
+        $deslugs    = $deslug   ? $this->planBrandDeslug($rows) : [];
+
+        if ($deslug) {
+            $affected = $rows->filter(fn ($r) => isset($deslugs[(string) $r->brand]))->count();
+
+            $this->info('');
+            $this->line('  Brand slugs to rewrite: ' . number_format(count($deslugs))
+                        . ' (' . number_format($affected) . ' fragrances)');
+
+            foreach (array_slice($deslugs, 0, 8, true) as $from => $to) {
+                $this->line("    <fg=gray>{$from}</>  ->  {$to}");
+            }
+        }
 
         if ($fixNames) {
             $this->info('');
@@ -232,6 +247,20 @@ class DedupeFragrancesCommand extends Command
             });
 
             $this->line("    names cleaned: {$renamed}  |  brand spellings merged: " . count($brandFixes));
+        }
+
+        if ($deslug && $deslugs) {
+            $touched = 0;
+
+            DB::transaction(function () use ($deslugs, &$touched) {
+                foreach ($deslugs as $from => $to) {
+                    $touched += DB::table('fragrances')
+                        ->where('brand', $from)
+                        ->update(['brand' => $to, 'updated_at' => now()]);
+                }
+            });
+
+            $this->line("    brand slugs rewritten: " . count($deslugs) . " ({$touched} fragrances)");
         }
 
         $version = app(CatalogCache::class)->flush();
@@ -340,6 +369,121 @@ class DedupeFragrancesCommand extends Command
         }
 
         return ucwords(strtolower(str_replace('-', ' ', $m[1])));
+    }
+
+    /**
+     * Rewrite hyphenated brand slugs as readable names.
+     *
+     * Half the catalog arrived with the brand stored as the URL slug —
+     * "Calvin-klein", "O-boticario", "Victoria-s-secret" — which is what the
+     * interface then displays.
+     *
+     * Splitting on hyphens and title-casing is right for the overwhelming
+     * majority (Calvin Klein, Hugo Boss, Marc Jacobs). Four patterns are not,
+     * and are handled explicitly:
+     *
+     *   -s- / trailing -s   a possessive: Victoria-s-secret -> Victoria's Secret
+     *   leading L-          elided article: L-occitane -> L'Occitane
+     *   small words         Boadicea-the-victorious -> Boadicea the Victorious
+     *   lost punctuation    the source dropped "&" and "." entirely, so
+     *                       "Dolce-gabbana" cannot be recovered by rule —
+     *                       those need the override table below
+     *
+     * @return array<string, string>  slug => readable
+     */
+    private function planBrandDeslug(\Illuminate\Support\Collection $rows): array
+    {
+        // Punctuation the source discarded. Only the highest-volume houses are
+        // listed; the rule handles everything else acceptably.
+        $overrides = [
+            'bath-body-works'        => 'Bath & Body Works',
+            'dolce-gabbana'          => 'Dolce & Gabbana',
+            'abercrombie-fitch'      => 'Abercrombie & Fitch',
+            'dsquared2'              => 'DSQUARED²',
+            'm-micallef'             => 'M. Micallef',
+            'bond-no-9'              => 'Bond No. 9',
+            'l-occitane-en-provence' => "L'Occitane en Provence",
+            'victoria-s-secret'      => "Victoria's Secret",
+            'penhaligon-s'           => "Penhaligon's",
+            'e-coudray'              => 'E. Coudray',
+            'j-del-pozo'             => 'J. del Pozo',
+            's-oliver'               => "s.Oliver",
+            'l-t-piver'              => 'L.T. Piver',
+            'o-driu'                 => "O'Driù",
+        ];
+
+        // Kept lowercase unless they lead the name.
+        $small = ['the', 'of', 'de', 'del', 'des', 'du', 'di', 'da', 'la', 'le',
+                  'les', 'en', 'et', 'and', 'by', 'for', 'y', 'a', 'al'];
+
+        $fixes = [];
+
+        foreach ($rows->pluck('brand')->unique() as $brand) {
+            $brand = (string) $brand;
+
+            if (! str_contains($brand, '-')) {
+                continue;
+            }
+
+            $key = strtolower($brand);
+
+            if (isset($overrides[$key])) {
+                if ($overrides[$key] !== $brand) {
+                    $fixes[$brand] = $overrides[$key];
+                }
+
+                continue;
+            }
+
+            // Possessives: "victoria-s-secret" -> "victoria's secret".
+            $working = preg_replace('/-s-/', "'s-", $key);
+            $working = preg_replace('/-s$/', "'s", $working);
+
+            // Elided article: "l-erbolario" -> "l'erbolario".
+            //
+            // Requires at least two letters after the L. A single letter means
+            // an initialism, not an article — "l-t-piver" is L.T. Piver, and
+            // the looser rule turned it into "L'T Piver".
+            $working = preg_replace("/^l-(?=[a-z]{2,})/", "l'", $working);
+
+            $words = explode('-', $working);
+
+            $titled = [];
+            foreach ($words as $i => $word) {
+                if ($word === '') {
+                    continue;
+                }
+
+                $titled[] = ($i > 0 && in_array($word, $small, true))
+                    ? $word
+                    : $this->titleWord($word);
+            }
+
+            $readable = implode(' ', $titled);
+
+            if ($readable !== '' && $readable !== $brand) {
+                $fixes[$brand] = $readable;
+            }
+        }
+
+        return $fixes;
+    }
+
+    /**
+     * Upper-case a word's first letter, and the letter after an apostrophe.
+     *
+     * ucfirst alone leaves "l\'occitane" and "victoria\'s" with a lower-case
+     * letter after the apostrophe.
+     */
+    private function titleWord(string $word): string
+    {
+        $word = ucfirst($word);
+
+        return preg_replace_callback(
+            "/'([a-z])/",
+            fn ($m) => "'" . strtoupper($m[1]),
+            $word
+        );
     }
 
     /**
