@@ -25,6 +25,7 @@ class AuthController extends Controller
                 'submit'   => route('login.store'),
                 'register' => route('register'),
                 'forgot'   => route('password.request'),
+                'google'   => route('oauth.redirect', 'google'),
             ],
         ]);
     }
@@ -35,6 +36,29 @@ class AuthController extends Controller
             'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
+
+        // An account created through Google has no password. Auth::attempt
+        // would simply fail, and "these credentials do not match our records"
+        // is actively misleading for someone whose account exists and works —
+        // they just signed up a different way. Point them at the right button.
+        //
+        // Deliberately only reached when a password was submitted for an
+        // account that has none: it reveals nothing that the sign-up form does
+        // not already reveal by rejecting a duplicate email.
+        $passwordless = User::where('email', $credentials['email'])
+            ->whereNull('password')
+            ->whereNotNull('oauth_provider')
+            ->first();
+
+        if ($passwordless) {
+            return back()
+                ->withErrors([
+                    'email' => 'This account signs in with '
+                        . ucfirst($passwordless->oauth_provider)
+                        . '. Use the button above.',
+                ])
+                ->withInput($request->only('email'));
+        }
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()
@@ -59,6 +83,7 @@ class AuthController extends Controller
             'urls' => [
                 'submit' => route('register.store'),
                 'login'  => route('login'),
+                'google' => route('oauth.redirect', 'google'),
             ],
             // Shipped as a list so the select has real options — a few KB, and
             // it avoids a second round-trip just to fill a dropdown.

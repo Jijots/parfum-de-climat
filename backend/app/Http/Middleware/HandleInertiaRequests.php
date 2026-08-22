@@ -65,6 +65,13 @@ class HandleInertiaRequests extends Middleware
                 'verify'   => route('verification.notice'),
             ],
 
+            // Which social providers are configured. The UI hides a button
+            // rather than rendering one that throws when Socialite cannot
+            // build the driver — the visitor would meet that error, not us.
+            'oauthProviders' => array_values(array_filter([
+                config('services.google.client_id') ? 'google' : null,
+            ])),
+
             // Drives the active-link underline. Sent from the server because the
             // browser only knows the path, and the path does not always map
             // cleanly onto a route name.

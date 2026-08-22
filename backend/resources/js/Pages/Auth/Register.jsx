@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { useMemo } from 'react';
 import AuthLayout from '../../Layouts/AuthLayout';
 import Field from '../../Components/Field';
+import OAuthButtons from '../../Components/OAuthButtons';
 
 const GENDERS = [
     ['', 'Prefer not to say'],
@@ -41,7 +42,7 @@ function guessTimezone(available) {
     }
 }
 
-export default function Register({ urls, timezones }) {
+export default function Register({ urls, timezones, oauthProviders }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -85,6 +86,8 @@ export default function Register({ urls, timezones }) {
             }
         >
             <Head title="Create Account" />
+
+            <OAuthButtons providers={oauthProviders} urls={{ google: urls.google }} />
 
             <form onSubmit={submit}>
                 <Field id="name" label="Name" error={errors.name}>

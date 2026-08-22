@@ -4,6 +4,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Google OAuth
+    |--------------------------------------------------------------------------
+    |
+    | Credentials come from a Web application OAuth client in Google Cloud
+    | Console. The redirect URI registered there must match GOOGLE_REDIRECT_URI
+    | exactly, including scheme and trailing path — Google rejects anything else
+    | rather than warning about it.
+    |
+    */
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI', env('APP_URL') . '/auth/google/callback'),
+    ],
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Third Party Services
     |--------------------------------------------------------------------------
     |

@@ -43,6 +43,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [Web\AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [Web\AuthController::class, 'register'])->middleware('throttle:4,1')->name('register.store');
 
+    // Social sign-in. Throttled because each callback hits Google.
+    Route::get('/auth/{provider}/redirect', [Web\OAuthController::class, 'redirect'])
+        ->middleware('throttle:10,1')->name('oauth.redirect');
+    Route::get('/auth/{provider}/callback', [Web\OAuthController::class, 'callback'])
+        ->middleware('throttle:10,1')->name('oauth.callback');
+
     // Password reset
     Route::get('/forgot-password', [Web\PasswordResetController::class, 'showForgotForm'])->name('password.request');
     Route::post('/forgot-password', [Web\PasswordResetController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');

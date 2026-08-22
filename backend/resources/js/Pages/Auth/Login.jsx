@@ -1,8 +1,9 @@
 import { Head, useForm } from '@inertiajs/react';
 import AuthLayout from '../../Layouts/AuthLayout';
 import Field from '../../Components/Field';
+import OAuthButtons from '../../Components/OAuthButtons';
 
-export default function Login({ urls }) {
+export default function Login({ urls, oauthProviders }) {
     const { data, setData, post, processing, errors } = useForm({
         email: '',
         password: '',
@@ -32,6 +33,8 @@ export default function Login({ urls }) {
             }
         >
             <Head title="Sign In" />
+
+            <OAuthButtons providers={oauthProviders} urls={{ google: urls.google }} />
 
             <form onSubmit={submit}>
                 <Field id="email" label="Email" error={errors.email}>
