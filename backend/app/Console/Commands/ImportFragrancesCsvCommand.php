@@ -53,6 +53,18 @@ class ImportFragrancesCsvCommand extends Command
     private int $notesMapped   = 0;
     private int $notesUnmapped = 0;
 
+    /**
+     * Fragrantica perfume ids already present in the database, as a set.
+     *
+     * Loaded once up front rather than queried per chunk: identity is the
+     * trailing id in the source URL, and matching on that in SQL would need a
+     * LIKE per candidate, which no index can serve. Roughly 24k short strings,
+     * so a few MB of memory buys an O(1) check for every row in the file.
+     *
+     * @var array<string, true>
+     */
+    private array $existingPerfumeIds = [];
+
     public function handle(): int
     {
         $file      = $this->option('file');
@@ -118,6 +130,24 @@ class ImportFragrancesCsvCommand extends Command
         }
 
         $col = array_flip(array_map(fn ($h) => strtolower(trim($h)), $header));
+
+        // ── Preload existing identities ───────────────────────────────────────
+        if (! $dryRun) {
+            $this->line('  Indexing existing fragrances for deduplication…');
+
+            $this->existingPerfumeIds = Fragrance::query()
+                ->whereNotNull('external_source_url')
+                ->pluck('external_source_url')
+                ->mapWithKeys(function ($url) {
+                    $pid = self::perfumeIdFromUrl($url);
+
+                    return $pid === null ? [] : [$pid => true];
+                })
+                ->all();
+
+            $this->line('  Known perfume ids: ' . number_format(count($this->existingPerfumeIds)));
+            $this->info('');
+        }
 
         // ── Progress bar ──────────────────────────────────────────────────────
         $bar = $this->output->createProgressBar($rowsToProcess);
@@ -258,13 +288,46 @@ class ImportFragrancesCsvCommand extends Command
 
                 $allUrls = array_column($fragranceData, 'external_source_url');
 
-                // Split into new vs existing in one query
-                $existingUrls = Fragrance::whereIn('external_source_url', $allUrls)
-                    ->pluck('external_source_url')
-                    ->flip(); // collection used as a set for O(1) has()
+                // Identity is the Fragrantica perfume id, NOT the URL string.
+                //
+                // Matching on the raw URL is case-sensitive, and the source
+                // emits both casings for the same page:
+                //
+                //   .../perfume/Zoologist-Perfumes/Snowy-Owl-64381.html
+                //   .../perfume/zoologist-perfumes/snowy-owl-64381.html
+                //
+                // A second run therefore saw a URL it had never stored and
+                // inserted a duplicate row. That produced 225 duplicate pairs
+                // before it was noticed, and was invisible to a uniqueness
+                // check because every URL string genuinely was distinct.
+                //
+                // The trailing id is stable across casing, so keying on it
+                // makes the import idempotent no matter how the source
+                // capitalises its paths.
+                // $this->existingPerfumeIds is loaded once before the import
+                // begins, so matching costs nothing per chunk. Querying per
+                // chunk would mean a 200-clause OR of ILIKE patterns, none of
+                // which can use an index.
+                $isExisting = function (array $f): bool {
+                    $pid = self::perfumeIdFromUrl($f['external_source_url']);
 
-                $newRows      = array_values(array_filter($fragranceData, fn ($f) => ! $existingUrls->has($f['external_source_url'])));
-                $existingRows = array_values(array_filter($fragranceData, fn ($f) => $existingUrls->has($f['external_source_url'])));
+                    // No id in the URL means it cannot be matched this way.
+                    // Treat it as new; the unique index on external_source_url
+                    // is the backstop.
+                    return $pid !== null && isset($this->existingPerfumeIds[$pid]);
+                };
+
+                $newRows      = array_values(array_filter($fragranceData, fn ($f) => ! $isExisting($f)));
+                $existingRows = array_values(array_filter($fragranceData, fn ($f) => $isExisting($f)));
+
+                // Register the newcomers so a later chunk — or a duplicate row
+                // inside the SAME file — does not insert them a second time.
+                foreach ($newRows as $row) {
+                    $pid = self::perfumeIdFromUrl($row['external_source_url']);
+                    if ($pid !== null) {
+                        $this->existingPerfumeIds[$pid] = true;
+                    }
+                }
 
                 // Bulk-insert new fragrances
                 if ($newRows) {
@@ -348,6 +411,25 @@ class ImportFragrancesCsvCommand extends Command
     // ─────────────────────────────────────────────────────────────────────────
     // Normalisation helpers
     // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Pull the Fragrantica perfume id out of a source URL.
+     *
+     * .../perfume/Zoologist-Perfumes/Snowy-Owl-64381.html  ->  "64381"
+     *
+     * That id is the fragrance's real identity: it survives the casing and
+     * slug differences that make the full URL an unreliable dedup key.
+     * Returns null when the URL does not end in an id, so callers can fall
+     * back rather than guess.
+     */
+    private static function perfumeIdFromUrl(?string $url): ?string
+    {
+        if ($url === null || ! preg_match('/-(\d+)\.html?$/i', $url, $m)) {
+            return null;
+        }
+
+        return $m[1];
+    }
 
     /** "accento-overdose-pride-edition" → "Accento Overdose Pride Edition" */
     private function slugToName(string $slug): string
