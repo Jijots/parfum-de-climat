@@ -81,6 +81,12 @@ export default function AuthLayout({ eyebrow, title, accent, subline, children, 
                             {footer}
                         </div>
                     )}
+
+                    <p className="mt-8 font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--muted)]">
+                        <a href={nav.privacy} className="hover:text-[var(--color-accent)] transition-colors">Privacy</a>
+                        <span className="mx-2 opacity-40">/</span>
+                        <a href={nav.terms} className="hover:text-[var(--color-accent)] transition-colors">Terms</a>
+                    </p>
                 </div>
             </main>
         </div>

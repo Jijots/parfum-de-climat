@@ -110,6 +110,11 @@ return [
     |
     */
 
+    // Shown on the legal pages as the contact for data requests and account
+    // deletion. Separate from the 'from' address because a noreply@ mailbox is
+    // the wrong place to send a deletion request.
+    'support_address' => env('MAIL_SUPPORT_ADDRESS'),
+
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),

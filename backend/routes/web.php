@@ -66,6 +66,12 @@ Route::post('/logout', [Web\AuthController::class, 'logout'])->name('logout')->m
 Route::get('/app', [Web\RecommendController::class, 'index'])->name('app');
 Route::post('/app/recommend', [Web\RecommendController::class, 'recommend'])->middleware('throttle:20,1')->name('app.recommend');
 
+// Legal pages. Public and unauthenticated by design — they have to be
+// reachable by someone deciding whether to sign up, and by Google's OAuth
+// consent screen review.
+Route::get('/privacy', [Web\LegalController::class, 'privacy'])->name('privacy');
+Route::get('/terms', [Web\LegalController::class, 'terms'])->name('terms');
+
 Route::get('/browse', [Web\BrowseController::class, 'index'])->name('browse');
 Route::get('/browse/search', [Web\BrowseController::class, 'search'])->middleware('throttle:30,1')->name('browse.search');
 Route::get('/wardrobe', [Web\WardrobeController::class, 'index'])->name('wardrobe');

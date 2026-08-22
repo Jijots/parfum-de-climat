@@ -63,6 +63,8 @@ class HandleInertiaRequests extends Middleware
                 'register' => route('register'),
                 'logout'   => route('logout'),
                 'verify'   => route('verification.notice'),
+                'privacy'  => route('privacy'),
+                'terms'    => route('terms'),
             ],
 
             // Which social providers are configured. The UI hides a button

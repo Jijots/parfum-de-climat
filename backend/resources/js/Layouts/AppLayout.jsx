@@ -188,6 +188,22 @@ export default function AppLayout({ children }) {
 
             {/* Offsets the fixed header so page content is not hidden beneath it */}
             <main className="pt-16">{children}</main>
+
+            {/* A policy nobody can reach satisfies nothing — these links are the
+                only route to them for someone deciding whether to sign up. */}
+            <footer className="border-t border-[var(--hairline)] mt-24">
+                <div className="mx-auto max-w-5xl px-6 py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--muted)]">
+                        Parfum de Climat
+                    </p>
+
+                    <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.15em]">
+                        <a href={nav.browse} className="text-[var(--muted)] hover:text-[var(--color-accent)] transition-colors">Browse</a>
+                        <a href={nav.privacy} className="text-[var(--muted)] hover:text-[var(--color-accent)] transition-colors">Privacy</a>
+                        <a href={nav.terms} className="text-[var(--muted)] hover:text-[var(--color-accent)] transition-colors">Terms</a>
+                    </nav>
+                </div>
+            </footer>
         </div>
     );
 }
