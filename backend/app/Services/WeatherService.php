@@ -5,6 +5,7 @@ namespace App\Services;
 use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -31,6 +32,20 @@ use Illuminate\Support\Facades\Log;
  */
 class WeatherService
 {
+    /**
+     * How long a weather reading stays fresh.
+     *
+     * Ten minutes: shorter than any meaningful change in conditions, long
+     * enough that a burst of requests from the same area costs one API call.
+     */
+    private const CACHE_TTL = 600;
+
+    /**
+     * Decimal places kept when building a cache key from coordinates.
+     * Two is about 1.1 km — the right weather, not the right address.
+     */
+    private const COORD_PRECISION = 2;
+
     /**
      * Timezone region prefixes that indicate Southern Hemisphere location.
      * Used for season inversion logic.
@@ -67,7 +82,32 @@ class WeatherService
      *
      * @throws \RuntimeException  When the API key is missing or the request fails.
      */
+    /**
+     * Weather for a coordinate pair.
+     *
+     * Cached on ROUNDED coordinates for two reasons that happen to align.
+     *
+     * Quota: previously every recommendation hit OpenWeatherMap. The free tier
+     * is finite, the response is identical for anyone within about a kilometre,
+     * and conditions do not change minute to minute — so an uncached call was
+     * spending quota to re-fetch a value we already had.
+     *
+     * Privacy: two decimal places is roughly 1.1 km. That is precise enough to
+     * pick the right weather and far too coarse to identify a house, so the
+     * exact position never becomes a cache key.
+     */
     public function getCurrentWeather(float $latitude, float $longitude): array
+    {
+        $key = sprintf(
+            'weather:coord:%.2f,%.2f',
+            round($latitude, self::COORD_PRECISION),
+            round($longitude, self::COORD_PRECISION)
+        );
+
+        return Cache::remember($key, self::CACHE_TTL, fn () => $this->fetchByCoordinates($latitude, $longitude));
+    }
+
+    private function fetchByCoordinates(float $latitude, float $longitude): array
     {
         $apiKey = config('services.openweathermap.api_key');
 
@@ -122,7 +162,21 @@ class WeatherService
      *
      * @throws \RuntimeException  When the API key is missing, city is not found, or the request fails.
      */
+    /**
+     * Weather for a named place.
+     *
+     * Keyed on a normalised name so "manila", "Manila" and " Manila " share one
+     * entry, and hashed so an unusual place name cannot produce a key longer
+     * than a cache driver will accept.
+     */
     public function getCurrentWeatherByCity(string $city): array
+    {
+        $key = 'weather:city:' . md5(mb_strtolower(trim($city)));
+
+        return Cache::remember($key, self::CACHE_TTL, fn () => $this->fetchByCity($city));
+    }
+
+    private function fetchByCity(string $city): array
     {
         $apiKey = config('services.openweathermap.api_key');
 
