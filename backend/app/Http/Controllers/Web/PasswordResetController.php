@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\PasswordReset;
+use App\Rules\Turnstile;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
@@ -25,7 +26,12 @@ class PasswordResetController extends Controller
 
     public function sendResetLink(Request $request)
     {
-        $request->validate(['email' => ['required', 'email']]);
+        $request->validate([
+            'email' => ['required', 'email'],
+            // A reset request sends mail to an address the requester may not
+            // own, so it is worth a challenge as well as a rate limit.
+            'cf-turnstile-response' => [new Turnstile()],
+        ]);
 
         // We always return the same success message to prevent user enumeration.
         Password::sendResetLink($request->only('email'));

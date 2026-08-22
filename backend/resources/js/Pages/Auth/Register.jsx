@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import AuthLayout from '../../Layouts/AuthLayout';
 import Field from '../../Components/Field';
 import OAuthButtons from '../../Components/OAuthButtons';
+import Turnstile from '../../Components/Turnstile';
 
 const GENDERS = [
     ['', 'Prefer not to say'],
@@ -42,7 +43,7 @@ function guessTimezone(available) {
     }
 }
 
-export default function Register({ urls, timezones, oauthProviders }) {
+export default function Register({ urls, timezones, oauthProviders, turnstileSiteKey }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -53,6 +54,9 @@ export default function Register({ urls, timezones, oauthProviders }) {
         // a 400-entry list is a poor first impression.
         timezone: guessTimezone(timezones),
         gender: '',
+        // The field name Cloudflare's widget uses. Sent even when the widget
+        // is absent, so the server rule sees a consistent shape.
+        'cf-turnstile-response': '',
     });
 
     const checks = useMemo(
@@ -193,6 +197,15 @@ export default function Register({ urls, timezones, oauthProviders }) {
                         </select>
                     )}
                 </Field>
+
+                <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onToken={(token) => setData('cf-turnstile-response', token)}
+                />
+
+                {errors['cf-turnstile-response'] && (
+                    <p className="mb-4 text-xs text-[var(--error)]">{errors['cf-turnstile-response']}</p>
+                )}
 
                 <button type="submit" disabled={processing} className="btn-primary w-full justify-center disabled:opacity-50">
                     {processing ? 'Creating account…' : 'Create account'}

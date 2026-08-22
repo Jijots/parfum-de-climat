@@ -42,6 +42,9 @@ class SecurityHeaders
     private const FONT_CSS = 'https://api.fontshare.com';
     private const FONT_FILES = 'https://cdn.fontshare.com';
     private const IMAGE_CDN = 'https://fimgs.net';   // Fragrantica bottle images
+    // Bot protection. Needs to load a script AND embed its own iframe, so it
+    // has to appear in script-src and frame-src both.
+    private const TURNSTILE = 'https://challenges.cloudflare.com';
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -67,7 +70,7 @@ class SecurityHeaders
             "frame-ancestors 'none'",
             // Forms may only post back to the app itself.
             "form-action 'self'",
-            "script-src 'self' 'nonce-{$nonce}'",
+            "script-src 'self' 'nonce-{$nonce}' " . self::TURNSTILE,
             // 'unsafe-inline' is unavoidable for styles: React sets inline
             // style attributes and Tailwind emits them too. Inline STYLE is a
             // far smaller risk than inline script — it cannot execute.
@@ -75,7 +78,10 @@ class SecurityHeaders
             'font-src ' . implode(' ', ["'self'", self::FONT_FILES, 'data:']),
             // data: for inline SVG placeholders; fimgs.net serves every bottle.
             'img-src ' . implode(' ', ["'self'", 'data:', self::IMAGE_CDN]),
-            "connect-src 'self'",
+            'connect-src ' . implode(' ', ["'self'", self::TURNSTILE]),
+            // frame-src, not frame-ancestors: the widget embeds an iframe
+            // FROM Cloudflare. frame-ancestors still denies anyone framing us.
+            'frame-src ' . self::TURNSTILE,
             // Upgrade any stray http:// subresource rather than blocking it.
             'upgrade-insecure-requests',
         ];

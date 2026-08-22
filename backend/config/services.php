@@ -13,6 +13,21 @@ return [
     | rather than warning about it.
     |
     */
+    /*
+    |--------------------------------------------------------------------------
+    | Cloudflare Turnstile
+    |--------------------------------------------------------------------------
+    |
+    | Bot protection for the public forms. Free with no request cap. Leaving
+    | the secret unset disables the check entirely — see App\\Rules\\Turnstile
+    | for why, and treat setting it as part of deploying rather than optional.
+    |
+    */
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret'   => env('TURNSTILE_SECRET_KEY'),
+    ],
+
     'google' => [
         'client_id'     => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

@@ -1,9 +1,13 @@
 import { Head, useForm } from '@inertiajs/react';
 import AuthLayout from '../../Layouts/AuthLayout';
 import Field from '../../Components/Field';
+import Turnstile from '../../Components/Turnstile';
 
-export default function ForgotPassword({ urls }) {
-    const { data, setData, post, processing, errors } = useForm({ email: '' });
+export default function ForgotPassword({ urls, turnstileSiteKey }) {
+    const { data, setData, post, processing, errors } = useForm({
+        email: '',
+        'cf-turnstile-response': '',
+    });
 
     const submit = (e) => {
         e.preventDefault();
@@ -38,6 +42,15 @@ export default function ForgotPassword({ urls }) {
                         />
                     )}
                 </Field>
+
+                <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onToken={(token) => setData('cf-turnstile-response', token)}
+                />
+
+                {errors['cf-turnstile-response'] && (
+                    <p className="mb-4 text-xs text-[var(--error)]">{errors['cf-turnstile-response']}</p>
+                )}
 
                 <button type="submit" disabled={processing} className="btn-primary w-full justify-center disabled:opacity-50">
                     {processing ? 'Sending…' : 'Email reset link'}

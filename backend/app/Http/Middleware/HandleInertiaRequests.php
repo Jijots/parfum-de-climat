@@ -74,6 +74,11 @@ class HandleInertiaRequests extends Middleware
                 config('services.google.client_id') ? 'google' : null,
             ])),
 
+            // Public site key for the bot-protection widget. Null when the
+            // feature is unconfigured, which the forms read as "render no
+            // widget" rather than rendering a broken one.
+            'turnstileSiteKey' => config('services.turnstile.site_key'),
+
             // Drives the active-link underline. Sent from the server because the
             // browser only knows the path, and the path does not always map
             // cleanly onto a route name.

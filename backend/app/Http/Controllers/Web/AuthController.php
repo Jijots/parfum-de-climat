@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Rules\Turnstile;
 use App\Services\SessionWardrobeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -99,6 +100,9 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Password::min(12)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'timezone' => ['nullable', 'timezone'],
             'gender'   => ['nullable', 'in:masculine,feminine,unisex'],
+            // Bot protection, verified against Cloudflare on the server. The
+            // widget alone stops nobody who simply posts past the page.
+            'cf-turnstile-response' => [new Turnstile()],
         ]);
 
         $user = User::create([
