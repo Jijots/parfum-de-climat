@@ -75,6 +75,10 @@ Route::prefix('v1')->group(function () {
 
         // Admin Routes
         // Double-protected: auth:sanctum AND the 'admin' role middleware.
+        // Names are prefixed 'api.admin.' rather than 'admin.'. The web admin
+        // panel already owns 'admin.*', and two routes sharing a name is
+        // tolerated at runtime but makes `php artisan route:cache` fail
+        // outright — which took production down until it was found.
         Route::middleware('admin')->prefix('admin')->group(function () {
 
             // Fragrance Catalog Management
@@ -83,37 +87,37 @@ Route::prefix('v1')->group(function () {
                 // must be declared BEFORE wildcard routes ('/{fragrance}') to ensure
                 // correct route matching order.
                 Route::get('/unmapped-notes', [FragranceAdminController::class, 'unmappedNotes'])
-                     ->name('admin.fragrances.unmapped-notes');
+                     ->name('api.admin.fragrances.unmapped-notes');
                 Route::post('/notes/{note}/map', [FragranceAdminController::class, 'mapNote'])
-                     ->name('admin.fragrances.notes.map')
+                     ->name('api.admin.fragrances.notes.map')
                      ->whereNumber('note');
 
                 Route::get('/', [FragranceAdminController::class, 'index'])
-                     ->name('admin.fragrances.index');
+                     ->name('api.admin.fragrances.index');
                 Route::post('/', [FragranceAdminController::class, 'store'])
-                     ->name('admin.fragrances.store');
+                     ->name('api.admin.fragrances.store');
                 Route::put('/{fragrance}', [FragranceAdminController::class, 'update'])
-                     ->name('admin.fragrances.update')
+                     ->name('api.admin.fragrances.update')
                      ->whereNumber('fragrance');
                 Route::delete('/{fragrance}', [FragranceAdminController::class, 'destroy'])
-                     ->name('admin.fragrances.destroy')
+                     ->name('api.admin.fragrances.destroy')
                      ->whereNumber('fragrance');
             });
 
             // Note Climate Profile Management
             Route::prefix('notes')->group(function () {
                 Route::get('/', [NoteClimateProfileController::class, 'index'])
-                     ->name('admin.notes.index');
+                     ->name('api.admin.notes.index');
                 Route::post('/', [NoteClimateProfileController::class, 'store'])
-                     ->name('admin.notes.store');
+                     ->name('api.admin.notes.store');
                 Route::get('/{profile}', [NoteClimateProfileController::class, 'show'])
-                     ->name('admin.notes.show')
+                     ->name('api.admin.notes.show')
                      ->whereNumber('profile');
                 Route::put('/{profile}', [NoteClimateProfileController::class, 'update'])
-                     ->name('admin.notes.update')
+                     ->name('api.admin.notes.update')
                      ->whereNumber('profile');
                 Route::delete('/{profile}', [NoteClimateProfileController::class, 'destroy'])
-                     ->name('admin.notes.destroy')
+                     ->name('api.admin.notes.destroy')
                      ->whereNumber('profile');
             });
         });

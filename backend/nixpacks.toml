@@ -30,4 +30,14 @@ cmds = ["npm run build"]
 # Measured locally, the three caches take a request from ~270ms to ~240ms. That
 # is per-request, not just at boot: without them Laravel re-parses every config
 # file and recompiles the route table on every single hit.
-cmd = "php artisan migrate --force && php artisan storage:link && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=$PORT"
+# Caches are chained with ';' rather than '&&' ON PURPOSE.
+#
+# With '&&' a failing cache step aborts the whole command and the service never
+# starts. That is exactly what happened: `route:cache` exits 1 when two routes
+# share a name, so a latent naming collision took the site down and silently
+# held back eleven deploys. A cache that cannot be built should cost
+# performance, not availability.
+#
+# migrate still uses '&&' — booting an app against a schema that failed to
+# migrate is worse than not booting at all.
+cmd = "php artisan migrate --force && php artisan storage:link; php artisan config:cache; php artisan route:cache; php artisan view:cache; php artisan serve --host=0.0.0.0 --port=$PORT"
