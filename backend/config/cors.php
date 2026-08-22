@@ -29,11 +29,25 @@ return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-    'allowed_methods' => ['*'],
+    // The API uses these five; '*' also advertises TRACE and CONNECT.
+    'allowed_methods' => ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
 
     // Development: allow any origin.
     // Production: replace with ['https://yourdomain.com', 'https://admin.yourdomain.com']
-    'allowed_origins' => ['*'],
+    // Was ['*'], which let any website call the API from a browser and burn
+    // through the rate limits and the OpenWeatherMap quota.
+    //
+    // This does NOT restrict the Flutter app: native HTTP clients send no
+    // Origin header, and CORS is enforced by browsers only. So tightening this
+    // costs the mobile client nothing while closing the browser-side hole.
+    'allowed_origins' => array_values(array_filter([
+        env('APP_URL'),
+        env('FRONTEND_URL'),
+        // Local development origins for the Vite dev server.
+        'http://localhost:5173',
+        'http://127.0.0.1:8000',
+        'http://127.0.0.1:8899',
+    ])),
 
     'allowed_origins_patterns' => [],
 

@@ -18,7 +18,7 @@
         effect on first paint. Without this, there is a visible flash from
         light to dark on page load for users who prefer dark mode.
     --}}
-    <script>
+    <script nonce="{{ Illuminate\Support\Facades\Vite::cspNonce() }}">
         (function () {
             try {
                 var saved = localStorage.getItem('pdc_theme');

@@ -32,15 +32,23 @@ class DatabaseSeeder extends Seeder
         // ── 2. Default Admin User ─────────────────────────────────────────
         // Creates the initial admin account for the admin panel.
         // CHANGE THESE CREDENTIALS before deploying to any shared environment.
-        User::firstOrCreate(
+        $admin = User::firstOrCreate(
             ['email' => 'admin@parfumdeclimat.app'],
             [
                 'name'     => 'Admin',
                 'password' => Hash::make('password'),  // Change before production
-                'role'     => 'admin',
                 'timezone' => 'Asia/Manila',
             ]
         );
+
+        // Assigned deliberately rather than through the array above. 'role' is
+        // not mass-assignable — see User::$fillable — so passing it to
+        // firstOrCreate is silently dropped, and this account would come out as
+        // a normal user with the column's default of 'user'.
+        if ($admin->role !== 'admin') {
+            $admin->role = 'admin';
+            $admin->save();
+        }
 
         $this->command->info('  Created default admin: admin@parfumdeclimat.app / password');
         $this->command->warn('  ⚠ Change the admin password before deploying to production.');

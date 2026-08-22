@@ -50,11 +50,23 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
-        'role',
         'avatar_path',
         'timezone',
         'gender',
     ];
+
+    /**
+     * 'role' is deliberately NOT mass-assignable.
+     *
+     * Nothing currently exploits it — every write path names its columns
+     * explicitly, and registration hard-codes 'user'. But leaving it fillable
+     * means the first person to write $user->update($request->validated())
+     * hands any account a way to send role=admin and promote itself. Assign it
+     * deliberately instead:
+     *
+     *     $user->role = 'admin';
+     *     $user->save();
+     */
 
     /**
      * The attributes that should be hidden for serialization.

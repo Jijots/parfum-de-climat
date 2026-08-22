@@ -18,7 +18,7 @@
         and an unported one must not see their theme reset — so both read the
         same 'pdc_theme' key. Change one, change the other.
     --}}
-    <script>
+    <script nonce="{{ Illuminate\Support\Facades\Vite::cspNonce() }}">
         (function () {
             try {
                 var saved = localStorage.getItem('pdc_theme');

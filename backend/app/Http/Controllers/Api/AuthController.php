@@ -45,9 +45,9 @@ class AuthController extends Controller
             'email'    => $request->email,
             'password' => $request->password, // Auto-hashed via 'hashed' cast
             'timezone' => $request->input('timezone', 'UTC'),
-            // All self-registered users get the 'user' role.
-            // Admin role is assigned manually by an existing admin.
-            'role'     => 'user',
+            // All self-registered users get the 'user' role, which the column
+            // defaults to. 'role' is not mass-assignable — see User::$fillable
+            // — so admin has to be granted deliberately by an existing admin.
         ]);
 
         $token = $user->createToken('flutter-app')->plainTextToken;

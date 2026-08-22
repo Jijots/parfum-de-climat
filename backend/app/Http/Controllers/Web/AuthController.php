@@ -82,7 +82,9 @@ class AuthController extends Controller
             'password' => Hash::make($data['password']),
             'timezone' => $data['timezone'] ?? 'UTC',
             'gender'   => $data['gender'] ?? null,
-            'role'     => 'user',
+            // 'role' is intentionally absent: it is no longer mass-assignable,
+            // and the column defaults to 'user'. Passing it here would be
+            // silently discarded, which reads as if it were doing something.
         ]);
 
         Auth::login($user);

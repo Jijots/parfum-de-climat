@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Database\NeonPostgresConnector;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,6 +30,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Vite mints the per-request CSP nonce and stamps it on the script and
+        // style tags it injects — including the inline HMR snippet that
+        // @viteReactRefresh emits in development, which a nonce-based policy
+        // would otherwise block.
+        //
+        // SecurityHeaders reads it back via Vite::cspNonce() so the policy and
+        // the tags cannot drift apart. Providers boot before middleware runs,
+        // so the value is always set by the time the header is built.
+        Vite::useCspNonce();
+
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
