@@ -35,7 +35,7 @@ export default function VerifyEmail({ urls, email }) {
 
                 {recentlySuccessful && (
                     <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--color-accent)] text-center">
-                        Sent — check your inbox
+                        Sent, check your inbox
                     </p>
                 )}
             </form>

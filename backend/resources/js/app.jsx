@@ -22,7 +22,7 @@ if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
 }
 
 createInertiaApp({
-    title: (title) => (title ? `${title} — Parfum de Climat` : 'Parfum de Climat'),
+    title: (title) => (title ? `${title} · Parfum de Climat` : 'Parfum de Climat'),
 
     // eager: true bundles every page into one asset. With a handful of pages
     // that is smaller and simpler than the waterfall of lazy chunk requests,

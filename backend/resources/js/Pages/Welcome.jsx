@@ -88,7 +88,7 @@ export default function Welcome({ urls, stats }) {
                         className="mt-8 max-w-xl text-lg font-light leading-relaxed text-[var(--muted)]"
                     >
                         Parfum de Climat reads your local conditions and ranks the fragrances you
-                        own against today&apos;s temperature, humidity and season — note by note.
+                        own against today&apos;s temperature, humidity and season, note by note.
                     </motion.p>
 
                     <motion.div
@@ -163,8 +163,8 @@ export default function Welcome({ urls, stats }) {
                         <em className="italic text-[var(--color-accent)]">already own.</em>
                     </h2>
                     <p className="mt-4 max-w-lg text-sm leading-relaxed text-[var(--muted)]">
-                        No account needed to try it — a wardrobe you build as a guest carries over
-                        if you decide to sign up.
+                        No account needed to try it. A wardrobe you build as a guest carries
+                        over if you decide to sign up.
                     </p>
 
                     <div className="mt-8 flex flex-col sm:flex-row items-start gap-3">

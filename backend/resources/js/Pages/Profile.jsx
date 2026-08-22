@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '../Layouts/AppLayout';
 import PageHeader from '../Components/PageHeader';
 import Rule from '../Components/Rule';
+import TimezoneSelect from '../Components/TimezoneSelect';
 
 const GENDERS = [
     ['', 'Prefer not to say'],
@@ -85,15 +86,12 @@ export default function Profile({ user, urls, timezones }) {
                     </Row>
 
                     <Row label="Timezone" error={errors.timezone} hint="Sets your hemisphere, and so your season.">
-                        <select
+                        <TimezoneSelect
+                            id="timezone"
                             value={data.timezone}
-                            onChange={(e) => setData('timezone', e.target.value)}
-                            className="input-field w-full"
-                        >
-                            {timezones.map((tz) => (
-                                <option key={tz} value={tz}>{tz}</option>
-                            ))}
-                        </select>
+                            onChange={(tz) => setData('timezone', tz)}
+                            zones={timezones}
+                        />
                     </Row>
 
                     <div className="mt-10 flex items-center gap-4">

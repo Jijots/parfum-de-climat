@@ -4,6 +4,7 @@ import AuthLayout from '../../Layouts/AuthLayout';
 import Field from '../../Components/Field';
 import OAuthButtons from '../../Components/OAuthButtons';
 import Turnstile from '../../Components/Turnstile';
+import TimezoneSelect from '../../Components/TimezoneSelect';
 
 const GENDERS = [
     ['', 'Prefer not to say'],
@@ -170,16 +171,14 @@ export default function Register({ urls, timezones, oauthProviders, turnstileSit
                     hint="Sets your hemisphere, and so your season."
                 >
                     {(props) => (
-                        <select
-                            {...props}
+                        <TimezoneSelect
+                            id={props.id}
+                            invalid={props['aria-invalid']}
+                            describedBy={props['aria-describedby']}
                             value={data.timezone}
-                            onChange={(e) => setData('timezone', e.target.value)}
-                            className="input-field w-full"
-                        >
-                            {timezones.map((tz) => (
-                                <option key={tz} value={tz}>{tz}</option>
-                            ))}
-                        </select>
+                            onChange={(tz) => setData('timezone', tz)}
+                            zones={timezones}
+                        />
                     )}
                 </Field>
 

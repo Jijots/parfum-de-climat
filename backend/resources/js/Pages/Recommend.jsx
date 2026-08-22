@@ -211,14 +211,14 @@ export default function Recommend({ urls, csrf, isGuest: initialIsGuest }) {
                                         "NaN°" and a bare "%": the keys simply do not exist on the
                                         HTTP response. Both shapes live in RecommendController. */}
                                     <p className="font-display text-7xl sm:text-8xl font-light leading-[0.85] text-[var(--ink)]">
-                                        {Number.isFinite(weather.temperature) ? weather.temperature : '—'}
+                                        {Number.isFinite(weather.temperature) ? weather.temperature : '--'}
                                         <span className="text-3xl align-super">°</span>
                                     </p>
 
                                     <dl className="grid grid-cols-2 gap-x-10 gap-y-2 pb-2 font-mono text-[11px] uppercase tracking-[0.12em]">
                                         <dt className="text-[var(--muted)]">Sky</dt>
                                         <dd className="text-[var(--ink)]">
-                                            {weather.description || weather.condition || '—'}
+                                            {weather.description || weather.condition || 'Unknown'}
                                         </dd>
 
                                         {Number.isFinite(weather.feels_like) && (
@@ -230,7 +230,7 @@ export default function Recommend({ urls, csrf, isGuest: initialIsGuest }) {
 
                                         <dt className="text-[var(--muted)]">Humidity</dt>
                                         <dd className="text-[var(--ink)]">
-                                            {Number.isFinite(weather.humidity) ? `${weather.humidity}%` : '—'}
+                                            {Number.isFinite(weather.humidity) ? `${weather.humidity}%` : '--'}
                                         </dd>
 
                                         <dt className="text-[var(--muted)]">Season</dt>

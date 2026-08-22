@@ -110,7 +110,18 @@ class SecurityHeaders
 
         // Advertising the exact PHP build only helps someone matching it to a
         // known CVE.
+        //
+        // Two calls because there are two sources. PHP emits this itself at the
+        // SAPI level when expose_php is on, which Laravel's response object
+        // knows nothing about — header_remove() is what clears that one, and
+        // removing it from the response only covers the case where something
+        // in the app set it. Verified in production: the response-object call
+        // alone left the header intact.
         $response->headers->remove('X-Powered-By');
+
+        if (! headers_sent()) {
+            header_remove('X-Powered-By');
+        }
 
         return $response;
     }
