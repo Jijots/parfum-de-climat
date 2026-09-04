@@ -10,8 +10,8 @@ colors:
   terracotta: "#B05A36"
   terracotta-dim: "rgba(176, 90, 54, 0.10)"
   terracotta-edge: "rgba(176, 90, 54, 0.30)"
+  on-accent: "#FFFFFF"
   error-red: "#B94040"
-  legacy-wheat-gold-DEPRECATED: "#C4A882"
 typography:
   display:
     fontFamily: "Zodiak, Cormorant Garamond, Georgia, Times New Roman, serif"
@@ -40,8 +40,8 @@ spacing:
   section: "6.5rem"
 components:
   button-primary:
-    backgroundColor: "{colors.legacy-wheat-gold-DEPRECATED}"
-    textColor: "#1A1A1A"
+    backgroundColor: "{colors.terracotta}"
+    textColor: "{colors.on-accent}"
     rounded: "{rounded.pill}"
     padding: "12px 28px"
   button-ghost:
@@ -50,8 +50,8 @@ components:
     rounded: "{rounded.pill}"
     padding: "12px 28px"
   badge-active:
-    backgroundColor: "rgba(196, 168, 130, 0.12)"
-    textColor: "{colors.legacy-wheat-gold-DEPRECATED}"
+    backgroundColor: "{colors.terracotta-dim}"
+    textColor: "{colors.terracotta}"
     rounded: "9999px"
     padding: "2px 10px"
   input-field:
@@ -94,11 +94,14 @@ Warm and paper-toned throughout; the only saturated color in the system is the t
 - **Warm Grey** (`#515151`, dark mode `#A39A8C`): secondary/muted text.
 - **Taupe Hairline** (`#D1C9BF`, dark mode `rgba(209,201,191,0.16)`): every border and divider in the system. No pure-white or pure-black borders anywhere.
 
+### On-accent
+- **On Accent** (`#FFFFFF` light, `#1A1A1A` dark): text and icons placed directly on a solid terracotta fill, currently only `.btn-primary`. It inverts between modes on purpose. The accent itself lightens in dark mode to hold contrast against a near-black page, which flips what its own foreground needs: white clears AA on light-mode terracotta (4.82:1) but fails on the lighter dark-mode value (3.41:1), and near-black does the reverse (5.09:1 dark, ~3.6:1 light). Neither single value passes both, hence a dedicated adaptive token.
+
 ### Feedback
 - **Error Red** (`#B94040`, dark mode `#E05858`): validation errors and destructive state only.
 
 ### Named Rules
-**The One Accent Rule.** Terracotta (`{colors.terracotta}` / `var(--color-accent)`) is the only accent token new work should reach for. A second accent color — a legacy wheat gold, `#C4A882` — is still hardcoded directly (not through a token) in six places: `.btn-primary`, `.badge-active`, `.stat-card` icons, `.sidebar-link.active`, the input focus glow, and the global `:focus-visible` outline. This is a known, unintended drift from before the palette moved to terracotta, not a deliberate two-accent system — confirmed with the project owner during this scan. New components should use terracotta; reconciling the six legacy spots is tracked as cleanup, not a pattern to extend.
+**The One Accent Rule.** Terracotta (`{colors.terracotta}` / `var(--color-accent)`) is the only accent in the system. A legacy wheat gold (`#C4A882`) previously survived as a hardcoded literal in ten places — `.btn-primary`, `.badge-active`, `.stat-card` icons, `.sidebar-link.active`, the input focus glow and border, the global and per-button `:focus-visible` outlines, the data-table row hover, the Inertia progress bar, and the legacy shell's active-nav underline. All ten now route through the adaptive token. Never reintroduce a raw accent hex: it cannot flip for dark mode, which is exactly how the drift started.
 
 ## Typography
 
@@ -147,14 +150,14 @@ Pill radius (`9999px`) on every interactive control — buttons, inputs, badges,
 
 ### Buttons
 - **Shape:** pill (`border-radius: 9999px`).
-- **Primary:** currently the legacy wheat-gold background (`#C4A882`) with near-black text (`#1A1A1A`), uppercase tracked label type, full neumorphic dual-shadow. Per the Named Rule above, new primary-action surfaces should target terracotta instead; this entry documents current shipped state, not the target.
+- **Primary:** terracotta fill (`var(--accent)`) with `var(--on-accent)` text, uppercase tracked label type, full neumorphic dual-shadow.
 - **Ghost/Secondary:** transparent background, ink-colored text and border at 20% opacity, no shadow — border darkens to `--muted` on hover.
 - **Icon:** compact, transparent, hairline border, muted icon color that shifts to ink on hover.
 - **States:** hover softens the shadow (primary) or darkens the border (ghost); active scales to 98% with an inset-shadow press effect on primary; disabled drops to 45% opacity and removes shadow.
 
 ### Badges
 - **Style:** pill, hairline border, translucent tinted background matching its semantic state.
-- **Variants:** active (wheat-gold tint — same drift as buttons), error (red tint), inactive (neutral grey tint).
+- **Variants:** active (terracotta tint on `var(--accent-dim)` with an `var(--accent-edge)` border), error (red tint), inactive (neutral grey tint).
 
 ### Cards / Containers
 - **Corner style:** 24px radius (`--radius-lg`).
@@ -163,19 +166,19 @@ Pill radius (`9999px`) on every interactive control — buttons, inputs, badges,
 
 ### Inputs / Fields
 - **Style:** pill radius, parchment background, neumorphic inset shadow.
-- **Focus:** border and glow currently key off the legacy wheat gold, not terracotta — same drift noted above.
+- **Focus:** terracotta border plus a 3px glow at 20% accent, mixed from the token rather than a fixed rgba so it flips with the theme.
 - **Error:** red border with a matching red-tinted focus glow; label text drops to `.field-error` (small, red).
 
 ### Stat Card
 - **Style:** neumorphic raised (real dual-shadow, unlike `.neu-raised`), parchment background.
 - **Value:** display-font, large, light weight, tight tracking.
-- **Icon color:** legacy wheat gold — same drift.
+- **Icon color:** terracotta at 70% opacity.
 
 ### Data Table
 - **Style:** flat, hairline row dividers only, no zebra striping. Uppercase tracked monospace-adjacent header labels. Row hover is a near-imperceptible accent tint (3.5% opacity).
 
 ### Sidebar Navigation
-- **Style:** flat list items, muted icon/text at rest, ink on hover with a subtle surface-tint background. Active state uses the legacy wheat gold plus a neumorphic inset shadow — the same drift as buttons/badges.
+- **Style:** flat list items, muted icon/text at rest, ink on hover with a subtle surface-tint background. Active state is terracotta text plus a neumorphic inset shadow.
 
 ### Divider / Section Label
 - **Divider:** a 1px hairline rule, no gradient or decoration.
@@ -192,6 +195,7 @@ Pill radius (`9999px`) on every interactive control — buttons, inputs, badges,
 
 ### Don't:
 - **Don't** combine neumorphic shadows and glass blur/translucency on the same element.
-- **Don't** introduce a new hardcoded accent hex. Route through the terracotta token — and don't propagate the legacy wheat gold (`#C4A882`) into any new component; it is drift to reconcile, not a pattern to extend.
+- **Don't** introduce a hardcoded accent hex anywhere, in CSS or in JS config. Route through `var(--accent)` (or `color-mix()` off it for tints), so the value can flip for dark mode. A raw hex is exactly how the old wheat-gold drift started.
+- **Don't** put `var(--ink)` on a solid accent fill. Use `var(--on-accent)`, which inverts independently — see the On-accent note under Colors.
 - **Don't** use Inter as the body face; it is a fallback only.
 - **Don't** use sharp (0px) corners on any interactive element.

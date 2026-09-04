@@ -43,7 +43,9 @@ createInertiaApp({
     },
 
     progress: {
-        color: '#C4A882', // wheat gold, matches --color-accent
+        // The bar is appended to <body>, so the adaptive accent var resolves
+        // against :root / .dark and flips with the theme like everything else.
+        color: 'var(--accent)',
         showSpinner: false,
     },
 });

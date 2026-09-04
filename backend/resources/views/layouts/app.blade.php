@@ -45,7 +45,6 @@
 
 <body
     class="min-h-screen bg-[var(--bg)] text-[var(--ink)] font-sans antialiased transition-colors duration-150"
-    x-data
 >
     {{-- Navigation --}}
     <header class="fixed inset-x-0 top-0 z-50 border-b border-[var(--hairline)]" style="background-color:var(--surface-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
@@ -62,12 +61,12 @@
             <div class="hidden md:flex items-center">
                 <nav class="flex items-center gap-6 text-sm">
                     {{-- Public routes: always visible --}}
-                    <a href="{{ route('app') }}"      class="transition-colors {{ request()->routeIs('app')      ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Recommend</a>
-                    <a href="{{ route('browse') }}"   class="transition-colors {{ request()->routeIs('browse*')  ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Browse</a>
-                    <a href="{{ route('wardrobe') }}" class="transition-colors {{ request()->routeIs('wardrobe') ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Wardrobe</a>
+                    <a href="{{ route('app') }}"      class="transition-colors {{ request()->routeIs('app')      ? 'text-[var(--ink)] font-medium underline decoration-[var(--accent)] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Recommend</a>
+                    <a href="{{ route('browse') }}"   class="transition-colors {{ request()->routeIs('browse*')  ? 'text-[var(--ink)] font-medium underline decoration-[var(--accent)] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Browse</a>
+                    <a href="{{ route('wardrobe') }}" class="transition-colors {{ request()->routeIs('wardrobe') ? 'text-[var(--ink)] font-medium underline decoration-[var(--accent)] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">Wardrobe</a>
                     @auth
                     @if (auth()->user()->hasVerifiedEmail())
-                    <a href="{{ route('history') }}"  class="transition-colors {{ request()->routeIs('history')  ? 'text-[var(--ink)] font-medium underline decoration-[#C4A882] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">History</a>
+                    <a href="{{ route('history') }}"  class="transition-colors {{ request()->routeIs('history')  ? 'text-[var(--ink)] font-medium underline decoration-[var(--accent)] underline-offset-4' : 'text-[var(--muted)] hover:text-[var(--ink)]' }}">History</a>
                     @endif
                     @endauth
                 </nav>
@@ -76,33 +75,37 @@
             {{-- Right: actions — flex:1 + justify-end balances the logo on the left --}}
             <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem;">
 
-                {{-- Theme toggle --}}
+                {{-- Theme toggle. Plain JS, not Alpine: Alpine evaluates its
+                     expressions with new Function(), which the app's CSP blocks
+                     (no 'unsafe-eval'). Every page on this shell threw an
+                     EvalError until this was rewritten. --}}
                 <button
                     type="button"
                     class="btn-icon"
                     title="Toggle dark mode"
-                    @click="$store.theme.toggle()"
-                    :aria-label="$store.theme.dark ? 'Switch to light mode' : 'Switch to dark mode'"
+                    data-theme-toggle
+                    aria-label="Toggle dark mode"
                 >
-                    <svg x-show="$store.theme.dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <svg data-theme-icon="dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25M18.364 5.636l-1.591 1.591M21 12h-2.25M18.364 18.364l-1.591-1.591M12 21v-2.25M5.636 18.364l1.591-1.591M3 12h2.25M5.636 5.636l1.591 1.591M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
                     </svg>
-                    <svg x-show="!$store.theme.dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <svg data-theme-icon="light" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
                     </svg>
                 </button>
 
                 @auth
-                {{-- User menu --}}
-                <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" @click.outside="open = false" class="btn-icon" title="Account">
+                {{-- User menu. Same reason as the theme toggle: no Alpine. --}}
+                <div class="relative" data-account-menu>
+                    <button type="button" data-account-trigger aria-expanded="false" aria-controls="account-menu-panel" class="btn-icon" title="Account">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
                         </svg>
                     </button>
                     <div
-                        x-show="open"
-                        x-transition
+                        id="account-menu-panel"
+                        data-account-panel
+                        hidden
                         class="absolute right-0 mt-2 w-48 glass rounded-xl border border-[var(--hairline)] shadow-[0_8px_32px_rgba(0,0,0,0.08)] py-1"
                     >
                         <p class="px-4 py-2 text-xs text-[var(--muted)] border-b border-[var(--hairline)]">{{ auth()->user()->name }}</p>
@@ -192,6 +195,82 @@
             </p>
         </div>
     </footer>
+
+    {{--
+        ── Shell interactivity ────────────────────────────────────────────────
+        Plain JS on purpose. This shell used Alpine (x-data / @click / x-show),
+        but Alpine compiles its expressions with new Function(), which the app's
+        Content-Security-Policy blocks outright — no 'unsafe-eval'. Every page
+        still served by this layout (404 / 403 / 500 and the admin login) threw
+        Alpine EvalErrors in production as a result.
+
+        Rewriting the two interactions in vanilla JS fixes them without
+        loosening the CSP, which is the whole point of having it. The nonce is
+        the same mechanism the FOUC guard above already uses.
+    --}}
+    <script nonce="{{ Illuminate\Support\Facades\Vite::cspNonce() }}">
+        (function () {
+            var root = document.documentElement;
+
+            /* ── Theme toggle ─────────────────────────────────────────────── */
+            var toggle = document.querySelector('[data-theme-toggle]');
+
+            function paintTheme() {
+                var isDark = root.classList.contains('dark');
+                var dark = document.querySelector('[data-theme-icon="dark"]');
+                var light = document.querySelector('[data-theme-icon="light"]');
+
+                if (dark) dark.style.display = isDark ? '' : 'none';
+                if (light) light.style.display = isDark ? 'none' : '';
+                if (toggle) {
+                    toggle.setAttribute(
+                        'aria-label',
+                        isDark ? 'Switch to light mode' : 'Switch to dark mode'
+                    );
+                }
+            }
+
+            paintTheme();
+
+            if (toggle) {
+                toggle.addEventListener('click', function () {
+                    var isDark = root.classList.toggle('dark');
+                    try {
+                        // Same key the Inertia shell writes, so a theme choice
+                        // survives crossing between the two live shells.
+                        localStorage.setItem('pdc_theme', isDark ? 'dark' : 'light');
+                    } catch (e) { /* private browsing — the class still applies */ }
+                    paintTheme();
+                });
+            }
+
+            /* ── Account menu ─────────────────────────────────────────────── */
+            var menu = document.querySelector('[data-account-menu]');
+
+            if (menu) {
+                var trigger = menu.querySelector('[data-account-trigger]');
+                var panel = menu.querySelector('[data-account-panel]');
+
+                var setOpen = function (open) {
+                    panel.hidden = !open;
+                    trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                };
+
+                trigger.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    setOpen(panel.hidden);
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!menu.contains(e.target)) setOpen(false);
+                });
+
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') setOpen(false);
+                });
+            }
+        })();
+    </script>
 
     @stack('scripts')
 </body>

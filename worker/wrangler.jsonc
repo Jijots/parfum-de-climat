@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "parfum-de-climat-shield",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-04",
+
+  // The Worker runs on every request to the site. It passes them straight to
+  // the origin unless the origin is still booting — see src/index.js.
+  //
+  // zone_name (not zone_id) so this file carries no account-specific ids.
+  "routes": [
+    { "pattern": "parfumdeclimat.app/*", "zone_name": "parfumdeclimat.app" },
+    { "pattern": "www.parfumdeclimat.app/*", "zone_name": "parfumdeclimat.app" }
+  ],
+
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 }
+  }
+}

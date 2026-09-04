@@ -66,6 +66,11 @@ Route::post('/logout', [Web\AuthController::class, 'logout'])->name('logout')->m
 Route::get('/app', [Web\RecommendController::class, 'index'])->name('app');
 Route::post('/app/recommend', [Web\RecommendController::class, 'recommend'])->middleware('throttle:20,1')->name('app.recommend');
 
+// The feature is called "Recommend" everywhere in the UI, so /recommend is the
+// URL people type or share. It has no route of its own; send it to the one it
+// obviously means rather than a 404.
+Route::redirect('/recommend', '/app');
+
 // Legal pages. Public and unauthenticated by design — they have to be
 // reachable by someone deciding whether to sign up, and by Google's OAuth
 // consent screen review.

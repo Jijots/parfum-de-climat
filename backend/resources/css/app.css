@@ -67,6 +67,15 @@
         /* Feedback */
         --error:        #B94040;
 
+        /* Text placed directly on a solid --accent fill (.btn-primary).
+           Needs its own token rather than reusing --ink: --accent inverts
+           lightness between modes for its own reasons (contrast against the
+           page background), which happens to invert AGAIN relative to what
+           text-on-accent needs. White on light-mode terracotta (#B05A36) is
+           4.82:1; white on dark-mode terracotta (#C97551) drops to 3.41:1 —
+           fails AA. Near-black does the reverse. Hence a dedicated flip. */
+        --on-accent:    #FFFFFF;
+
         /* Elevation pair — kept for the few surfaces still using them. */
         --shadow-dark:  #E6DDCD;
         --shadow-light: #FFFDF7;
@@ -97,6 +106,9 @@
         /* Feedback */
         --error:        #E05858;
 
+        /* Inverted from :root — see the light-mode comment on --on-accent. */
+        --on-accent:    #1A1A1A;
+
         /* Elevation pair */
         --shadow-dark:  #131110;
         --shadow-light: #2A2422;
@@ -114,7 +126,7 @@
 
     /* Global keyboard focus ring — accent color, clean */
     :focus-visible {
-        outline:        2px solid #C4A882;
+        outline:        2px solid var(--accent);
         outline-offset: 3px;
     }
 
@@ -170,6 +182,7 @@
     --color-accent:        var(--accent);
     --color-accent-dim:    var(--accent-dim);
     --color-accent-border: var(--accent-edge);
+    --color-on-accent:     var(--on-accent);
     --color-panel:         var(--panel);
 
     /* ── Shadows ─────────────────────────────────────────────────────── */
@@ -251,8 +264,8 @@
         justify-content:  center;
         gap:              0.5rem;
         padding:          0.75rem 1.75rem;
-        background-color: #C4A882;
-        color:            #1A1A1A;
+        background-color: var(--accent);
+        color:            var(--on-accent);
         font-family:      var(--font-sans);
         font-size:        0.8125rem;
         font-weight:      500;
@@ -276,7 +289,7 @@
                         inset -1px -1px 3px rgba(255, 255, 255, 0.35);
         }
         &:focus-visible {
-            outline:        2px solid #C4A882;
+            outline:        2px solid var(--accent);
             outline-offset: 3px;
         }
         &:disabled, &[disabled] {
@@ -315,7 +328,7 @@
             transform: scale(0.98);
         }
         &:focus-visible {
-            outline:        2px solid #C4A882;
+            outline:        2px solid var(--accent);
             outline-offset: 3px;
         }
         &:disabled, &[disabled] {
@@ -367,10 +380,10 @@
         }
         &:focus {
             outline:      none;
-            border-color: #C4A882;
+            border-color: var(--accent);
             box-shadow:   inset 4px 4px 8px var(--shadow-dark),
                           inset -4px -4px 8px var(--shadow-light),
-                          0 0 0 3px rgba(196, 168, 130, 0.20);
+                          0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
         }
         &.is-invalid {
             border-color: var(--error);
@@ -436,9 +449,9 @@
     }
 
     .badge-active {
-        background-color: rgba(196, 168, 130, 0.12);
-        border-color:     rgba(196, 168, 130, 0.28);
-        color:            #C4A882;
+        background-color: var(--accent-dim);
+        border-color:     var(--accent-edge);
+        color:            var(--accent);
     }
 
     .badge-error {
@@ -486,7 +499,7 @@
             & .sidebar-icon { opacity: 1; }
         }
         &.active {
-            color:            #C4A882;
+            color:            var(--accent);
             background-color: var(--bg);
             box-shadow:       inset 4px 4px 8px var(--shadow-dark),
                               inset -4px -4px 8px var(--shadow-light);
@@ -519,7 +532,7 @@
             color:          var(--muted);
         }
         & .stat-icon {
-            color:   #C4A882;
+            color:   var(--accent);
             opacity: 0.7;
         }
     }
@@ -553,7 +566,7 @@
             transition: background-color 100ms ease-out;
         }
         & tbody tr:hover td {
-            background-color: rgba(196, 168, 130, 0.035);
+            background-color: color-mix(in srgb, var(--accent) 4%, transparent);
         }
     }
 
