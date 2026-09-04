@@ -6,11 +6,13 @@ name: Keep Render warm
 # happens.
 #
 # ── On the free-tier hours ───────────────────────────────────────────────────
-# Render's free plan allows 750 instance-hours per month. A service kept awake
-# continuously uses about 730 (24 x 30.4), so this fits with roughly 20 hours to
-# spare — but those hours are pooled ACROSS THE ACCOUNT. If you add a second
-# free service this will push you over, and the fix is to narrow the schedule
-# below to the hours you actually use the app.
+# Render's free plan allows 750 instance-hours per month, POOLED ACROSS THE
+# ACCOUNT — not per service. A second free service (the TravelCo API) also
+# needs a keep-warm slice of that same 750, so this workflow was narrowed from
+# 24/7 (~730 hours, leaving nothing for anything else) to business hours only:
+# 8am-6pm PHT (00:00-09:59 UTC) = ~10 hrs/day * 30.4 ≈ 304 hours/month. That
+# leaves ~446 hours/month for the TravelCo API's own keep-warm window plus
+# headroom for real traffic-driven runtime on both services.
 #
 # ── On the schedule ──────────────────────────────────────────────────────────
 # GitHub's scheduled runs are best-effort and get delayed when the platform is
@@ -21,7 +23,7 @@ name: Keep Render warm
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/10 0-9 * * *'  # every 10 min, 00:00-09:59 UTC = 8am-6pm PHT
   workflow_dispatch:        # lets you trigger a wake-up by hand
 
 jobs:

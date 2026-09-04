@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-02T14:46:06Z",
+  "title": "Design System: Parfum de Climat",
+  "extensions": {
+    "colorMeta": {
+      "terracotta": {
+        "role": "primary",
+        "displayName": "Terracotta",
+        "canonical": "#B05A36",
+        "tonalRamp": ["#3D1F13", "#5A2E1C", "#7A3F26", "#96502F", "#B05A36", "#C97551", "#DDA184", "#F0CFC0"]
+      },
+      "parchment": {
+        "role": "neutral",
+        "displayName": "Parchment",
+        "canonical": "#FEF9EF",
+        "tonalRamp": ["#1C1917", "#2A2B2F", "#515151", "#A39A8C", "#D1C9BF", "#F5EEE1", "#FEF9EF", "#FFFDF7"]
+      },
+      "aged-paper": {
+        "role": "neutral",
+        "displayName": "Aged Paper",
+        "canonical": "#F5EEE1",
+        "tonalRamp": ["#1C1917", "#262120", "#515151", "#A39A8C", "#D1C9BF", "#F5EEE1", "#FEF9EF", "#FFFDF7"]
+      },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#2A2B2F" },
+      "warm-grey": { "role": "neutral", "displayName": "Warm Grey", "canonical": "#515151" },
+      "taupe-hairline": { "role": "neutral", "displayName": "Taupe Hairline", "canonical": "#D1C9BF" },
+      "error-red": { "role": "error", "displayName": "Error Red", "canonical": "#B94040" },
+      "legacy-wheat-gold-DEPRECATED": {
+        "role": "accent-drift",
+        "displayName": "Legacy Wheat Gold (deprecated)",
+        "canonical": "#C4A882",
+        "note": "Hardcoded directly in six places (.btn-primary, .badge-active, .stat-card icon, .sidebar-link.active, input focus glow, global :focus-visible). Not a token, not a deliberate second accent. New work should reference {colors.terracotta} instead."
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Zodiak)", "purpose": "Hero and section-level headlines only. True italics available and used for the mixed roman/italic headline treatment." },
+      "body": { "displayName": "Body (Satoshi)", "purpose": "All reading copy and interface text." },
+      "label": { "displayName": "Label (system mono)", "purpose": "Eyebrows, field labels, nav, badges, numeric/stat values. Never body copy." }
+    },
+    "shadows": [
+      { "name": "neu-raised", "value": "6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light)", "purpose": "Buttons, inputs (base layer), stat cards. Parchment-toned shadow pair, not black/white." },
+      { "name": "neu-inset", "value": "inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light)", "purpose": "Input fields, active sidebar item." },
+      { "name": "glass-flat", "value": "0 8px 32px rgba(0, 0, 0, 0.08)", "purpose": "Panel separation only — sidebar, modals, feature cards. Always paired with a hairline border and 20px backdrop blur." },
+      { "name": "focus", "value": "0 0 0 3px var(--accent-dim)", "purpose": "Accent-colored focus ring, layered over the element's base shadow." }
+    ],
+    "motion": [
+      { "name": "ease-micro", "value": "150ms ease-out", "purpose": "Button/input/hover state transitions." },
+      { "name": "ease-entrance", "value": "cubic-bezier(0.22, 1, 0.36, 1) 400-500ms", "purpose": "Page and section entrance animation (staggered headings, hero reveal) via the motion/react library." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action. Currently keys off the legacy wheat-gold color, not the terracotta token — documented as shipped state, not the target for new work.",
+      "html": "<button class=\"ds-btn-primary\">Take a reading</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 28px; background-color: #C4A882; color: #1A1A1A; font-size: 13px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; border: none; border-radius: 9999px; box-shadow: 6px 6px 12px #E6DDCD, -6px -6px 12px #FFFDF7; transition: transform 150ms ease-out, box-shadow 150ms ease-out; cursor: pointer; } .ds-btn-primary:hover { box-shadow: 4px 4px 8px #E6DDCD, -4px -4px 8px #FFFDF7; } .ds-btn-primary:active { transform: scale(0.98); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.10), inset -1px -1px 3px rgba(255,255,255,0.35); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action. Transparent, hairline-bordered, no shadow.",
+      "html": "<button class=\"ds-btn-ghost\">Browse the catalogue</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 28px; background-color: transparent; color: #2A2B2F; font-size: 13px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; border: 1px solid rgba(42,43,47,0.2); border-radius: 9999px; transition: border-color 150ms ease-out, color 150ms ease-out, transform 150ms ease-out; cursor: pointer; } .ds-btn-ghost:hover { border-color: #515151; } .ds-btn-ghost:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Neumorphic inset text input. Focus glow currently keys off the legacy wheat gold, same drift as buttons.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Enter a city…\" />",
+      "css": ".ds-input { display: block; width: 100%; padding: 10px 14px; background-color: #FEF9EF; color: #2A2B2F; font-size: 14px; line-height: 1.5; border: 1px solid transparent; border-radius: 9999px; box-shadow: inset 4px 4px 8px #E6DDCD, inset -4px -4px 8px #FFFDF7; transition: border-color 150ms ease-out, box-shadow 150ms ease-out; } .ds-input::placeholder { color: #515151; } .ds-input:focus { outline: none; border-color: #C4A882; box-shadow: inset 4px 4px 8px #E6DDCD, inset -4px -4px 8px #FFFDF7, 0 0 0 3px rgba(196,168,130,0.20); }"
+    },
+    {
+      "name": "Fragrance Card",
+      "kind": "card",
+      "refersTo": "neu-raised",
+      "description": "Signature browse/catalogue tile. Tonal elevation (no shadow) despite the neumorphic class name — a hairline border and one-tone-deeper background carry the depth instead.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-image\"></div><div class=\"ds-card-body\"><p class=\"ds-card-brand\">Maison</p><p class=\"ds-card-name\">Example Fragrance</p></div></div>",
+      "css": ".ds-card { background-color: #F5EEE1; border: 1px solid #D1C9BF; border-radius: 24px; overflow: hidden; transition: border-color 150ms ease, transform 150ms ease; } .ds-card:hover { border-color: rgba(176,90,54,0.30); } .ds-card-image { aspect-ratio: 1; background: rgba(230,221,205,0.3); } .ds-card-body { padding: 12px; } .ds-card-brand { font-size: 12px; color: #515151; } .ds-card-name { font-size: 14px; font-weight: 500; color: #2A2B2F; margin-top: 2px; }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge-active",
+      "description": "Status pill. Active variant uses the legacy wheat gold — same drift as buttons/inputs.",
+      "html": "<span class=\"ds-badge ds-badge-active\">Active</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 9999px; border: 1px solid #D1C9BF; background-color: rgba(245,238,225,0.72); color: #515151; } .ds-badge-active { background-color: rgba(196,168,130,0.12); border-color: rgba(196,168,130,0.28); color: #C4A882; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Apothecary Ledger",
+    "overview": "Parfum de Climat reads like a bound record kept by someone who takes scent seriously: parchment pages, a terracotta wax seal standing in for the one accent that matters, and a warm, ink-on-paper voice throughout. Nothing about it should feel like a SaaS dashboard wearing perfume branding — it should feel like the tool a perfumer's assistant would actually keep, blending an apothecary's material warmth with the precision of a scoring instrument. The system runs two elevation languages deliberately, never mixed on one element: neumorphism for things you press or fill in, and liquid glass for things you sit inside. Type carries the same split: an editorial serif (Zodiak) for display moments, a warm humanist sans (Satoshi) for reading, and a tracked uppercase monospace for labels and numeric stats.",
+    "keyCharacteristics": [
+      "Parchment-and-terracotta palette; warm in both light and dark mode",
+      "Neumorphism for things you act on, liquid glass for things you sit inside — never combined",
+      "Pill-shaped interactive elements, 24px-radius containers, no sharp corners",
+      "Zodiak (display serif) / Satoshi (body sans) / tracked uppercase monospace (labels) — a three-role type system",
+      "Tactile, confident interaction: buttons and inputs read as physically pressable, not flat"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Terracotta is the only accent token new work should reach for. A legacy wheat gold (#C4A882) is still hardcoded in six places — a known drift, not a pattern to extend.", "section": "colors" },
+      { "name": "The No-Inter Rule", "body": "Inter never renders as the body face; it is a fallback three deep only.", "section": "typography" },
+      { "name": "The Never-Both Rule", "body": "Neumorphism and Liquid Glass never coexist on one element. Stated explicitly in the source; the system's central material law.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use terracotta for any new accent, link, or active-state need.",
+      "Do use pill radius on every new interactive control; 20–32px radius on containers.",
+      "Do reserve the uppercase tracked monospace role for labels, eyebrows, and numeric stats only.",
+      "Do keep dark-mode neutrals warm; never desaturate toward cool grey or true black.",
+      "Do treat neumorphism and liquid glass as mutually exclusive per element."
+    ],
+    "donts": [
+      "Don't combine neumorphic shadows and glass blur/translucency on the same element.",
+      "Don't introduce a new hardcoded accent hex, and don't propagate the legacy wheat gold into new components.",
+      "Don't use Inter as the body face; it is a fallback only.",
+      "Don't use sharp (0px) corners on any interactive element."
+    ]
+  }
+}

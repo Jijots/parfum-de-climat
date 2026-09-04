@@ -62,7 +62,9 @@ export default function AppLayout({ children }) {
     const { auth, nav, currentRoute } = usePage().props;
     const [dark, toggleTheme] = useTheme();
     const [menuOpen, setMenuOpen] = useState(false);
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const menuRef = useRef(null);
+    const mobileNavRef = useRef(null);
 
     // Close the account menu on any click outside it — the Alpine original used
     // @click.outside; in React that needs an explicit document listener.
@@ -79,10 +81,40 @@ export default function AppLayout({ children }) {
         return () => document.removeEventListener('mousedown', onClick);
     }, [menuOpen]);
 
+    // Same outside-click contract as the account menu, plus Escape: this is a
+    // disclosure panel, not a modal, but it still needs a keyboard-only exit.
+    useEffect(() => {
+        if (!mobileNavOpen) return;
+
+        const onClick = (e) => {
+            if (mobileNavRef.current && !mobileNavRef.current.contains(e.target)) {
+                setMobileNavOpen(false);
+            }
+        };
+        const onKey = (e) => {
+            if (e.key === 'Escape') setMobileNavOpen(false);
+        };
+
+        document.addEventListener('mousedown', onClick);
+        document.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onClick);
+            document.removeEventListener('keydown', onKey);
+        };
+    }, [mobileNavOpen]);
+
     const isActive = (name) =>
         name === 'browse'
             ? currentRoute?.startsWith('browse')
             : currentRoute === name;
+
+    // Shared with the mobile panel below — the primary sections, in order.
+    const navItems = [
+        { key: 'app', href: nav.app, label: 'Recommend' },
+        { key: 'browse', href: nav.browse, label: 'Browse' },
+        { key: 'wardrobe', href: nav.wardrobe, label: 'Wardrobe' },
+        ...(auth.user?.verified ? [{ key: 'history', href: nav.history, label: 'History' }] : []),
+    ];
 
     return (
         <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)] font-sans antialiased transition-colors duration-150">
@@ -95,11 +127,16 @@ export default function AppLayout({ children }) {
                 }}
             >
                 <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
-                    {/* flex-1 on both sides keeps the centre nav optically centred */}
-                    <div className="flex-1">
+                    {/* flex-1 on both sides keeps the centre nav optically centred.
+                        min-w-0 lets this shrink instead of forcing the row to wrap;
+                        the wordmark steps down below md so it doesn't crowd the icon
+                        cluster, and truncate is a hard safety net — nowrap text on a
+                        shrunk flex child overflows into its siblings, not out of view,
+                        which is what produced the overlap this replaces. */}
+                    <div className="flex-1 min-w-0">
                         <a
                             href={nav.landing}
-                            className="font-display text-2xl font-light tracking-wide text-[var(--ink)] hover:text-[var(--color-accent)] transition-colors duration-150"
+                            className="block truncate font-display text-lg sm:text-xl md:text-2xl font-light tracking-wide text-[var(--ink)] hover:text-[var(--color-accent)] transition-colors duration-150"
                         >
                             Parfum <span className="text-[var(--color-accent)]">de</span> Climat
                         </a>
@@ -107,12 +144,11 @@ export default function AppLayout({ children }) {
 
                     <div className="hidden md:flex items-center">
                         <nav className="flex items-center gap-6 text-sm">
-                            <NavLink href={nav.app} active={isActive('app')}>Recommend</NavLink>
-                            <NavLink href={nav.browse} active={isActive('browse')}>Browse</NavLink>
-                            <NavLink href={nav.wardrobe} active={isActive('wardrobe')}>Wardrobe</NavLink>
-                            {auth.user?.verified && (
-                                <NavLink href={nav.history} active={isActive('history')}>History</NavLink>
-                            )}
+                            {navItems.map((item) => (
+                                <NavLink key={item.key} href={item.href} active={isActive(item.key)}>
+                                    {item.label}
+                                </NavLink>
+                            ))}
                         </nav>
                     </div>
 
@@ -174,16 +210,88 @@ export default function AppLayout({ children }) {
                             </div>
                         ) : (
                             <>
-                                <a href={nav.login} className="text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
+                                {/* Below md both move into the mobile panel instead of
+                                    shrinking in place — at 375px, a full wordmark plus
+                                    Sign in, Get started, and the hamburger has no honest
+                                    fit; the panel gives Get started a full-width primary
+                                    button instead of a squeezed one. */}
+                                <a href={nav.login} className="hidden md:inline text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
                                     Sign in
                                 </a>
-                                <a href={nav.register} className="btn-primary text-sm py-1.5 px-4">
+                                <a href={nav.register} className="hidden md:inline-flex btn-primary text-sm py-1.5 px-4">
                                     Get started
                                 </a>
                             </>
                         )}
+
+                        {/* Mobile nav toggle — the desktop <nav> above is hidden below
+                            md with nothing standing in for it; this and the panel below
+                            are that replacement. */}
+                        <button
+                            type="button"
+                            className="btn-icon md:hidden"
+                            title="Menu"
+                            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+                            aria-expanded={mobileNavOpen}
+                            aria-controls="mobile-nav-panel"
+                            onClick={() => setMobileNavOpen((o) => !o)}
+                        >
+                            {mobileNavOpen ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+                                </svg>
+                            )}
+                        </button>
                     </div>
                 </div>
+
+                {/* Mobile nav panel — a disclosure, not a modal: no focus trap or
+                    scroll lock, just the same outside-click + Escape contract as
+                    the account menu above, extended to a full-width surface. */}
+                {mobileNavOpen && (
+                    <div
+                        id="mobile-nav-panel"
+                        ref={mobileNavRef}
+                        className="md:hidden glass border-t border-[var(--hairline)] px-6 py-4"
+                    >
+                        {/* Guest conversion leads the panel — this is its only home
+                            below md now, so it gets a full-width primary button
+                            rather than the squeezed pill the header had no room for. */}
+                        {!auth.user && (
+                            <a href={nav.register} className="btn-primary w-full justify-center text-sm mb-3">
+                                Get started
+                            </a>
+                        )}
+
+                        <nav className="flex flex-col">
+                            {navItems.map((item) => (
+                                <a
+                                    key={item.key}
+                                    href={item.href}
+                                    className={`flex items-center h-11 text-sm transition-colors ${
+                                        isActive(item.key)
+                                            ? 'text-[var(--ink)] font-medium'
+                                            : 'text-[var(--muted)] hover:text-[var(--ink)]'
+                                    }`}
+                                >
+                                    {item.label}
+                                </a>
+                            ))}
+                            {!auth.user && (
+                                <a
+                                    href={nav.login}
+                                    className="flex items-center h-11 text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors border-t border-[var(--hairline)]"
+                                >
+                                    Sign in
+                                </a>
+                            )}
+                        </nav>
+                    </div>
+                )}
             </header>
 
             {/* Offsets the fixed header so page content is not hidden beneath it */}
